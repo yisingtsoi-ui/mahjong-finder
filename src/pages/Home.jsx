@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Users, Zap } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
@@ -8,6 +8,33 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const [user, setUser] = useState(null)
 
+  const fetchNearbyUsers = async (lat, long, currentUserId) => {
+    // Call the secure RPC function instead of querying the table directly
+    const { data, error } = await supabase.rpc('get_nearby_users', {
+      lat,
+      long,
+      radius_meters: 5000, // 5km radius
+    })
+
+    if (error) {
+      console.error('Error fetching nearby users:', error)
+    } else {
+      let users = data || []
+      
+      // Filter out current user if currentUserId is provided
+      if (currentUserId) {
+        users = users.filter(u => u.id !== currentUserId)
+      }
+
+      // Sort by distance (nearest first) and limit to 10
+      users.sort((a, b) => a.distance_meters - b.distance_meters)
+      const top10Users = users.slice(0, 10)
+      
+      setNearbyUsers(top10Users)
+    }
+    setLoading(false)
+  }
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
@@ -15,11 +42,16 @@ export default function Home() {
         // Check current status
         supabase
           .from('profiles')
-          .select('is_online')
+          .select('is_online, latitude, longitude')
           .eq('id', user.id)
           .single()
           .then(({ data }) => {
-            if (data) setIsOnline(data.is_online)
+            if (data) {
+              setIsOnline(data.is_online)
+              if (data.is_online && data.latitude && data.longitude) {
+                fetchNearbyUsers(data.latitude, data.longitude, user.id)
+              }
+            }
           })
       }
     })
@@ -46,7 +78,7 @@ export default function Home() {
 
             if (error) throw error
             setIsOnline(true)
-            fetchNearbyUsers(latitude, longitude)
+            fetchNearbyUsers(latitude, longitude, user.id)
           },
           (error) => {
             console.error('Error getting location:', error)
@@ -71,21 +103,7 @@ export default function Home() {
     }
   }
 
-  const fetchNearbyUsers = async (lat, long) => {
-    // Call the secure RPC function instead of querying the table directly
-    const { data, error } = await supabase.rpc('get_nearby_users', {
-      lat,
-      long,
-      radius_meters: 5000, // 5km radius
-    })
 
-    if (error) {
-      console.error('Error fetching nearby users:', error)
-    } else {
-      setNearbyUsers(data || [])
-    }
-    setLoading(false)
-  }
 
   const toggleOnline = () => {
     updateLocation(!isOnline)
