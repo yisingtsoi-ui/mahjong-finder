@@ -1,9 +1,10 @@
-﻿import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import Profile from './pages/Profile'
 import Login from './pages/Login'
+import Map from './pages/Map'
 import { supabase } from './lib/supabase'
 
 function App() {
@@ -37,13 +38,7 @@ function App() {
         <Route path="/profile" element={session ? <Profile /> : <Navigate to="/login" />} />
         <Route
           path="/map"
-          element={
-            session ? (
-              <div className="p-8 text-center">地圖功能開發中...</div>
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
+          element={session ? <Map /> : <Navigate to="/login" />}
         />
       </Routes>
       {session && <Navbar />}
