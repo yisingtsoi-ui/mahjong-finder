@@ -66,12 +66,18 @@ export default function Home() {
         navigator.geolocation.getCurrentPosition(
           async (position) => {
             const { latitude, longitude } = position.coords
+            
+            // 位置模糊化處理：加上隨機偏移量，保護用戶真實位置 (約偏移 ±200-300 米)
+            const fuzzOffset = () => (Math.random() - 0.5) * 0.005
+            const fuzzedLat = latitude + fuzzOffset()
+            const fuzzedLong = longitude + fuzzOffset()
+
             const { error } = await supabase
               .from('profiles')
               .update({
                 is_online: true,
-                latitude,
-                longitude,
+                latitude: fuzzedLat,
+                longitude: fuzzedLong,
                 last_seen: new Date().toISOString(),
               })
               .eq('id', user.id)

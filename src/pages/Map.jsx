@@ -30,6 +30,7 @@ function ChangeView({ center }) {
 export default function Map() {
   const [users, setUsers] = useState([])
   const [center, setCenter] = useState([22.3193, 114.1694]) // Default to Hong Kong
+  const [myLocation, setMyLocation] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -38,6 +39,7 @@ export default function Map() {
       (position) => {
         const { latitude, longitude } = position.coords
         setCenter([latitude, longitude])
+        setMyLocation([latitude, longitude])
         fetchUsers()
       },
       (error) => {
@@ -50,6 +52,9 @@ export default function Map() {
 
   const fetchUsers = async () => {
     try {
+      // 獲取當前用戶ID，以便過濾掉自己
+      const { data: { user } } = await supabase.auth.getUser()
+
       // Get all online users with coordinates
       const { data, error } = await supabase
         .from('profiles')
@@ -59,7 +64,10 @@ export default function Map() {
         .not('longitude', 'is', null)
 
       if (error) throw error
-      setUsers(data || [])
+      
+      // Filter out current user
+      const otherUsers = (data || []).filter(u => u.id !== user?.id)
+      setUsers(otherUsers)
     } catch (error) {
       console.error('Error fetching users:', error)
     } finally {
@@ -89,6 +97,15 @@ export default function Map() {
           />
           <ChangeView center={center} />
           
+          {/* 標記自己的精確位置 */}
+          {myLocation && (
+            <Marker position={myLocation}>
+              <Popup className="rounded-xl">
+                <div className="text-center font-bold p-1">我的位置</div>
+              </Popup>
+            </Marker>
+          )}
+
           {users.map((user) => (
             <Marker
               key={user.id}
