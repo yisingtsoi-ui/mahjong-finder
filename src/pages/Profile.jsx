@@ -225,14 +225,28 @@ export default function Profile() {
               <div key={index} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
                 <div className="flex justify-between items-start mb-2">
                   <span className="font-bold text-sm">{review.reviewer_name || '神秘雀友'}</span>
-                  <div className="flex">
-                    {[...Array(5)].map((_, i) => (
-                      <Star 
-                        key={i} 
-                        size={14} 
-                        className={i < review.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"} 
-                      />
-                    ))}
+                  <div className="flex gap-3 text-xs text-gray-600">
+                    <div className="flex items-center gap-1">
+                      <span>牌速</span>
+                      <span className="flex">
+                        <Star size={12} className="text-yellow-400 fill-yellow-400" />
+                        <span className="ml-0.5">{review.speed_rating || '-'}</span>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span>牌技</span>
+                      <span className="flex">
+                        <Star size={12} className="text-yellow-400 fill-yellow-400" />
+                        <span className="ml-0.5">{review.skill_rating || '-'}</span>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span>牌品</span>
+                      <span className="flex">
+                        <Star size={12} className="text-yellow-400 fill-yellow-400" />
+                        <span className="ml-0.5">{review.manner_rating || '-'}</span>
+                      </span>
+                    </div>
                   </div>
                 </div>
                 {review.comment && (

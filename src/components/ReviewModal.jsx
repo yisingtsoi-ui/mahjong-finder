@@ -3,7 +3,9 @@ import { X, Star } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export default function ReviewModal({ match, currentUser, targetUser, onClose, onSubmit }) {
-  const [rating, setRating] = useState(5);
+  const [speedRating, setSpeedRating] = useState(5);
+  const [skillRating, setSkillRating] = useState(5);
+  const [mannerRating, setMannerRating] = useState(5);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -16,7 +18,9 @@ export default function ReviewModal({ match, currentUser, targetUser, onClose, o
         reviewer_id: currentUser.id,
         reviewee_id: targetUser.id,
         match_id: match.id,
-        rating,
+        speed_rating: speedRating,
+        skill_rating: skillRating,
+        manner_rating: mannerRating,
         comment
       }]);
 
@@ -42,19 +46,43 @@ export default function ReviewModal({ match, currentUser, targetUser, onClose, o
         <h2 className="text-xl font-bold text-center mb-2">牌局結束</h2>
         <p className="text-center text-gray-500 text-sm mb-6">請為雀友 <span className="font-bold text-black">{targetUser?.username || '神秘雀友'}</span> 留下評價</p>
         
-        <div className="flex justify-center gap-2 mb-6">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <button key={star} onClick={() => setRating(star)} className="focus:outline-none transition-transform hover:scale-110">
-              <Star 
-                size={32} 
-                className={`${star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
-              />
-            </button>
-          ))}
+        <div className="space-y-4 mb-6">
+          <div className="flex items-center justify-between">
+            <span className="font-medium text-gray-700">牌速</span>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button key={`speed-${star}`} onClick={() => setSpeedRating(star)} className="focus:outline-none transition-transform hover:scale-110">
+                  <Star size={24} className={`${star <= speedRating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <span className="font-medium text-gray-700">牌技</span>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button key={`skill-${star}`} onClick={() => setSkillRating(star)} className="focus:outline-none transition-transform hover:scale-110">
+                  <Star size={24} className={`${star <= skillRating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="font-medium text-gray-700">牌品</span>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button key={`manner-${star}`} onClick={() => setMannerRating(star)} className="focus:outline-none transition-transform hover:scale-110">
+                  <Star size={24} className={`${star <= mannerRating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
         
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">牌品與評價 (選填)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">其他評價 (選填)</label>
           <textarea 
             className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none resize-none"
             rows="3"
