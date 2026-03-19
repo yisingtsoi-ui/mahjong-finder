@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Users, Zap, QrCode } from 'lucide-react'
+import { Users, Zap, QrCode, Radio, User, Handshake, Star } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import QRCodeModal from '../components/QRCodeModal'
 import { isAfter } from 'date-fns'
@@ -168,41 +168,47 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 pb-20 px-4">
-      <div className="text-center mb-10">
-        <h1 className="text-4xl font-bold text-green-700 mb-2">揾腳神器</h1>
-        <p className="text-gray-500">三缺一？即刻上線搵雀友！</p>
+    <div className="flex flex-col min-h-screen bg-[#F5F4EE] pb-24 px-4 pt-6 font-sans text-gray-900">
+      <div className="flex items-center justify-center mb-8 border-b-2 border-black pb-4">
+        <div className="border-2 border-black rounded p-1 mr-3 bg-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+          <span className="font-black text-xl leading-none block">發</span>
+        </div>
+        <h1 className="text-2xl font-black tracking-widest">MAHJONG FINDER</h1>
       </div>
 
       {playStatus === 'playing' ? (
-        <div className="w-full max-w-sm bg-white p-8 rounded-3xl shadow-xl flex flex-col items-center border-4 border-green-500">
-          <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-4 animate-pulse">
-            <span className="text-5xl">🀄</span>
+        <div className="w-full bg-white p-6 rounded-xl border-2 border-black flex flex-col items-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+          <div className="w-16 h-16 border-2 border-black bg-[#F5F4EE] rounded-full flex items-center justify-center mb-4">
+            <span className="text-3xl font-black">中</span>
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">牌局進行中</h2>
-          <p className="text-gray-500 text-center mb-6">您目前正在牌局中，地圖已將您隱藏。牌局結束後，系統會通知您為雀友留下評價。</p>
+          <h2 className="text-xl font-bold mb-2">牌局進行中</h2>
+          <p className="text-sm text-center font-medium">您目前正在牌局中，地圖已將您隱藏。<br/>牌局結束後，系統會通知您為雀友留下評價。</p>
         </div>
       ) : (
         <>
           <button
             onClick={toggleOnline}
             disabled={loading}
-            className={`w-48 h-48 rounded-full border-8 flex flex-col items-center justify-center transition-all duration-300 shadow-xl ${
+            className={`w-full border-2 border-black rounded-xl py-5 flex items-center justify-center transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-[0px_0px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 ${
               isOnline
-                ? 'bg-green-500 border-green-600 text-white scale-105 shadow-green-200'
-                : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300'
+                ? 'bg-black text-white'
+                : 'bg-white text-black hover:bg-gray-50'
             } ${loading ? 'opacity-70 cursor-wait' : ''}`}
           >
-            <Zap size={64} className={`mb-2 ${isOnline ? 'fill-current' : ''}`} />
-            <span className="text-2xl font-bold">
-              {loading ? '處理中...' : isOnline ? '在線中' : '點擊上線'}
+            <Radio size={24} className={`mr-2 ${isOnline ? 'animate-pulse' : ''}`} />
+            <span className="text-xl font-bold tracking-wide">
+              {loading ? '處理中...' : isOnline ? '已上線' : '((o)) 點擊上線'}
             </span>
           </button>
+          
+          <div className={`text-center mt-3 font-bold text-sm tracking-widest ${isOnline ? 'text-black' : 'text-red-600'}`}>
+            {isOnline ? '目前在線' : '目前離線'}
+          </div>
 
           {isOnline && (
             <button 
               onClick={() => setShowQRModal(true)}
-              className="mt-6 bg-white text-green-600 font-bold py-3 px-6 rounded-full shadow-md flex items-center gap-2 border border-green-200 hover:bg-green-50 transition-colors"
+              className="mt-6 w-full bg-white text-black font-bold py-3 px-6 rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex justify-center items-center gap-2 hover:bg-gray-50 transition-all active:translate-y-1 active:shadow-none"
             >
               <QrCode size={20} />
               到達對局 (掃描/顯示 QR)
@@ -210,45 +216,65 @@ export default function Home() {
           )}
 
           {isOnline && (
-            <div className="mt-8 bg-white p-6 rounded-2xl shadow-lg w-full max-w-sm animate-fade-in">
-              <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center text-gray-700">
-              <Users className="mr-2" size={20} />
-              <span className="font-medium">附近雀友</span>
-            </div>
-            <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded-full">
-              {nearbyUsers.length} 人在線
-            </span>
-          </div>
-          {nearbyUsers.length === 0 ? (
-            <div className="text-center py-4 text-gray-500 text-sm">
-              附近暫時無人在線...
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {nearbyUsers.map((u) => (
-                <div
-                  key={u.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-xl"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-xl">
-                      🀄
-                    </div>
-                    <div>
-                      <div className="font-bold text-sm">{u.username || '神秘雀友'}</div>
-                      <div className="text-xs text-gray-500">
-                        {u.mahjong_styles?.[0] || '一般'} • {Math.round(u.distance_meters)}m
-                      </div>
-                    </div>
-                  </div>
-                  {/* Future: Add View Profile Button */}
+            <div className="mt-8 w-full">
+              <h2 className="font-bold text-lg mb-4 flex items-center">
+                附近的雀友 ({nearbyUsers.length})
+              </h2>
+
+              {nearbyUsers.length === 0 ? (
+                <div className="text-center py-8 font-bold text-gray-500 border-2 border-black border-dashed rounded-xl bg-white">
+                  附近暫時無人在線...
                 </div>
-              ))}
+              ) : (
+                <div className="space-y-4">
+                  {nearbyUsers.map((u) => (
+                    <div
+                      key={u.id}
+                      className="bg-white border-2 border-black rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 border-2 border-black rounded-full flex items-center justify-center bg-[#F5F4EE]">
+                            <User size={24} />
+                          </div>
+                          <div>
+                            <div className="font-bold text-lg leading-tight">{u.username || '神秘雀友'}</div>
+                            <div className="text-xs font-bold mt-1">
+                              距離 {Math.round(u.distance_meters)}m
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 評價區塊 (Placeholder 數據) */}
+                      <div className="flex justify-between items-center my-4 py-3 border-y-2 border-black">
+                        <div className="flex-1 text-center">
+                          <div className="flex justify-center mb-1"><Zap size={20} /></div>
+                          <div className="text-[10px] font-bold tracking-wider">牌速: -</div>
+                        </div>
+                        <div className="w-[2px] h-8 bg-black"></div>
+                        <div className="flex-1 text-center">
+                          <div className="flex justify-center mb-1">
+                            <span className="font-black text-lg leading-none" style={{height: '20px'}}>中</span>
+                          </div>
+                          <div className="text-[10px] font-bold tracking-wider">牌技: -</div>
+                        </div>
+                        <div className="w-[2px] h-8 bg-black"></div>
+                        <div className="flex-1 text-center">
+                          <div className="flex justify-center mb-1"><Handshake size={20} /></div>
+                          <div className="text-[10px] font-bold tracking-wider">牌品: -</div>
+                        </div>
+                      </div>
+
+                      <button className="w-full border-2 border-black rounded-lg py-2 font-bold tracking-wider hover:bg-black hover:text-white transition-colors active:translate-y-[2px] bg-white">
+                        查看聯絡方式
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
-        </div>
-        )}
         </>
       )}
 
