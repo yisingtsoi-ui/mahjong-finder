@@ -5,6 +5,7 @@ import Home from './pages/Home'
 import Profile from './pages/Profile'
 import Login from './pages/Login'
 import Map from './pages/Map'
+import GameHistory from './pages/GameHistory'
 import { supabase } from './lib/supabase'
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
         <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
         <Route path="/" element={session ? <Home /> : <Navigate to="/login" />} />
         <Route path="/profile" element={session ? <Profile /> : <Navigate to="/login" />} />
+        <Route path="/history" element={session ? <GameHistory /> : <Navigate to="/login" />} />
         <Route
           path="/map"
           element={session ? <Map /> : <Navigate to="/login" />}

@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Users, Zap, QrCode, Star, Clock } from 'lucide-react'
+import { Users, Zap, QrCode } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import QRCodeModal from '../components/QRCodeModal'
-import ReviewModal from '../components/ReviewModal'
 import { isAfter } from 'date-fns'
 
 export default function Home() {
@@ -15,9 +14,6 @@ export default function Home() {
   
   // Modals state
   const [showQRModal, setShowQRModal] = useState(false)
-  const [showReviewModal, setShowReviewModal] = useState(false)
-  const [pendingReviewMatch, setPendingReviewMatch] = useState(null)
-  const [pendingReviewTarget, setPendingReviewTarget] = useState(null)
 
   const checkUserStatus = async (currentUserId) => {
     try {
@@ -43,7 +39,19 @@ export default function Home() {
             }).eq('id', currentUserId)
             setPlayStatus('none')
             setIsOnline(false)
-            checkPendingReviews(currentUserId)
+            
+            // 通知用戶留評價
+            if ('Notification' in window) {
+              Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                  new Notification('牌局已結束', { body: '別忘了到「歷史牌局」為剛才的雀友留下評價喔！' });
+                } else {
+                  alert('牌局已結束！別忘了到「歷史牌局」為剛才的雀友留下評價喔！');
+                }
+              });
+            } else {
+              alert('牌局已結束！別忘了到「歷史牌局」為剛才的雀友留下評價喔！');
+            }
           } else {
             // 還在牌局中
             setPlayStatus('playing')
@@ -62,7 +70,6 @@ export default function Home() {
     }
   }
 
-  // 檢查是否有剛結束且尚未評價的牌局
   const fetchNearbyUsers = async (lat, long, currentUserId) => {
     const { data, error } = await supabase.rpc('get_nearby_users', {
       lat,
@@ -81,49 +88,6 @@ export default function Home() {
       setNearbyUsers(users.slice(0, 10))
     }
     setLoading(false)
-  }
-  const checkPendingReviews = async (currentUserId) => {
-    try {
-      // 找最近結束的牌局，且自己是參與者
-      const { data: recentMatches, error: matchError } = await supabase
-        .from('match_players')
-        .select('match_id, matches(end_time)')
-        .eq('user_id', currentUserId)
-        .order('match_id', { ascending: false })
-        .limit(1)
-
-      if (matchError || !recentMatches || recentMatches.length === 0) return
-
-      const matchId = recentMatches[0].match_id
-      
-      // 找出這場牌局的對方玩家
-      const { data: otherPlayers, error: playersError } = await supabase
-        .from('match_players')
-        .select('user_id, profiles(id, username)')
-        .eq('match_id', matchId)
-        .neq('user_id', currentUserId)
-        .single()
-        
-      if (playersError || !otherPlayers) return
-      
-      // 檢查是否已經評價過
-      const { count, error: reviewError } = await supabase
-        .from('reviews')
-        .select('*', { count: 'exact', head: true })
-        .eq('match_id', matchId)
-        .eq('reviewer_id', currentUserId)
-        
-      if (reviewError) return
-      
-      // 如果還沒評價，彈出評價視窗
-      if (count === 0) {
-        setPendingReviewMatch({ id: matchId })
-        setPendingReviewTarget(otherPlayers.profiles)
-        setShowReviewModal(true)
-      }
-    } catch (err) {
-      console.error('Error checking reviews:', err)
-    }
   }
 
   useEffect(() => {
@@ -216,15 +180,7 @@ export default function Home() {
             <span className="text-5xl">🀄</span>
           </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">牌局進行中</h2>
-          <p className="text-gray-500 text-center mb-6">您目前正在牌局中，地圖已將您隱藏。</p>
-          
-          <div className="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg text-gray-600 font-medium w-full justify-center">
-            <Clock size={18} />
-            自動結束時間：
-            <span className="text-black">
-              {playUntil ? playUntil.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '計算中...'}
-            </span>
-          </div>
+          <p className="text-gray-500 text-center mb-6">您目前正在牌局中，地圖已將您隱藏。牌局結束後，系統會通知您為雀友留下評價。</p>
         </div>
       ) : (
         <>
@@ -303,20 +259,6 @@ export default function Home() {
           onMatchStarted={() => {
             setShowQRModal(false);
             checkUserStatus(user.id);
-          }}
-        />
-      )}
-
-      {showReviewModal && pendingReviewMatch && pendingReviewTarget && user && (
-        <ReviewModal 
-          match={pendingReviewMatch}
-          currentUser={user}
-          targetUser={pendingReviewTarget}
-          onClose={() => setShowReviewModal(false)}
-          onSubmit={() => {
-            setShowReviewModal(false);
-            setPendingReviewMatch(null);
-            setPendingReviewTarget(null);
           }}
         />
       )}

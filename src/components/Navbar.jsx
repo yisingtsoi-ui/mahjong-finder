@@ -1,5 +1,5 @@
-﻿import { NavLink } from 'react-router-dom'
-import { MapPin, User, Home } from 'lucide-react'
+import { NavLink } from 'react-router-dom'
+import { MapPin, User, Home, History } from 'lucide-react'
 
 export default function Navbar() {
   const linkClass = ({ isActive }) =>
@@ -16,6 +16,10 @@ export default function Navbar() {
       <NavLink to="/map" className={linkClass}>
         <MapPin size={24} />
         <span className="text-xs mt-1">地圖</span>
+      </NavLink>
+      <NavLink to="/history" className={linkClass}>
+        <History size={24} />
+        <span className="text-xs mt-1">歷史</span>
       </NavLink>
       <NavLink to="/profile" className={linkClass}>
         <User size={24} />
