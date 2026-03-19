@@ -1,5 +1,6 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { Star } from 'lucide-react'
 
 export default function Profile() {
   const [loading, setLoading] = useState(true)
@@ -10,6 +11,7 @@ export default function Profile() {
     styles: [],
     bio: '',
   })
+  const [reviews, setReviews] = useState([])
   const [userId, setUserId] = useState(null)
 
   useEffect(() => {
@@ -39,6 +41,18 @@ export default function Profile() {
           bio: data.bio || '',
         })
       }
+
+      // Fetch recent reviews
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from('user_recent_reviews')
+        .select('*')
+        .eq('reviewee_id', id)
+        .limit(10)
+
+      if (!reviewsError && reviewsData) {
+        setReviews(reviewsData)
+      }
+
     } catch (error) {
       console.error('Error loading profile:', error)
     } finally {
@@ -187,7 +201,7 @@ export default function Profile() {
       <button
         onClick={editing ? updateProfile : () => setEditing(true)}
         disabled={loading}
-        className={`w-full py-4 rounded-xl font-bold shadow-lg text-white transition-all ${
+        className={`w-full py-4 rounded-xl font-bold shadow-lg text-white transition-all mb-8 ${
           editing
             ? 'bg-green-600 hover:bg-green-700'
             : 'bg-gray-900 hover:bg-gray-800'
@@ -195,6 +209,44 @@ export default function Profile() {
       >
         {loading ? '處理中...' : editing ? '儲存變更' : '編輯名片'}
       </button>
+
+      {/* Reviews Section */}
+      <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
+        <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <Star className="text-yellow-400 fill-yellow-400" size={20} />
+          雀友評價 ({reviews.length})
+        </h3>
+        
+        {reviews.length === 0 ? (
+          <p className="text-gray-500 text-sm text-center py-4">目前還沒有評價</p>
+        ) : (
+          <div className="space-y-4">
+            {reviews.map((review, index) => (
+              <div key={index} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="font-bold text-sm">{review.reviewer_name || '神秘雀友'}</span>
+                  <div className="flex">
+                    {[...Array(5)].map((_, i) => (
+                      <Star 
+                        key={i} 
+                        size={14} 
+                        className={i < review.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"} 
+                      />
+                    ))}
+                  </div>
+                </div>
+                {review.comment && (
+                  <p className="text-gray-600 text-sm bg-gray-50 p-3 rounded-lg">"{review.comment}"</p>
+                )}
+                <div className="text-xs text-gray-400 mt-2">
+                  {new Date(review.created_at).toLocaleDateString()}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
     </div>
   )
 }
