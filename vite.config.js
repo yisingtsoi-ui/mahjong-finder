@@ -30,10 +30,8 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'prompt',
-      injectRegister: 'auto',
-      manifestFilename: 'manifest.json',
-      includeAssets: ['icon.svg', 'pwa-192x192.png', 'pwa-512x512.png', 'maskable-192x192.png', 'maskable-512x512.png'],
+      registerType: 'autoUpdate',
+      includeAssets: ['icon.svg'],
       manifest: {
         name: 'Mahjong Finder',
         short_name: 'Mahjong',
@@ -41,41 +39,14 @@ export default defineConfig({
         theme_color: '#F5F4EE',
         background_color: '#F5F4EE',
         display: 'standalone',
-        start_url: '/',
-        scope: '/',
-        id: '/',
         icons: [
           {
-            src: '/pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any'
-          },
-          {
-            src: '/pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any'
-          },
-          {
-            src: '/maskable-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'maskable'
-          },
-          {
-            src: '/maskable-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable'
+            src: '/icon.svg',
+            sizes: 'any',
+            type: 'image/svg+xml',
+            purpose: 'any maskable'
           }
         ]
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        navigateFallback: '/index.html',
-        cleanupOutdatedCaches: true,
-        maximumFileSizeToCacheInBytes: 5242880
       }
     })
   ],
