@@ -28,7 +28,12 @@ function App() {
   }, [])
 
   if (loading) {
-    return <div className="flex h-screen items-center justify-center">Loading...</div>
+    return (
+      <div className="flex flex-col h-screen items-center justify-center bg-[#F5F4EE] space-y-4">
+        <span className="text-5xl animate-spin">🀄</span>
+        <span className="font-black tracking-widest text-xl">MAHJONG FINDER</span>
+      </div>
+    )
   }
 
   return (

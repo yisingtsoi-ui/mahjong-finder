@@ -103,7 +103,10 @@ export default function GameHistory() {
         </div>
 
         {loading ? (
-          <div className="text-center text-gray-500 py-8">載入中...</div>
+          <div className="flex flex-col items-center justify-center py-16 space-y-4">
+            <span className="text-4xl animate-spin">🀄</span>
+            <span className="font-bold tracking-widest text-gray-500">翻查戰績中...</span>
+          </div>
         ) : matches.length === 0 ? (
           <div className="bg-white p-8 rounded-2xl shadow-sm text-center">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">

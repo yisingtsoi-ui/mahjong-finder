@@ -125,7 +125,14 @@ export default function Profile() {
     window.location.reload()
   }
 
-  if (loading && !userId) return <div className="p-8 text-center font-bold tracking-widest">Loading...</div>
+  if (loading && !userId) {
+    return (
+      <div className="flex flex-col h-screen items-center justify-center bg-[#F5F4EE] space-y-4">
+        <span className="text-5xl animate-spin">🀄</span>
+        <span className="font-bold tracking-widest text-lg">理牌中...</span>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[#F5F4EE] pb-24 p-4 font-sans text-black">
