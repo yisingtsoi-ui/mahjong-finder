@@ -9,13 +9,31 @@ export default function QRCodeModal({ user, onClose, onMatchStarted }) {
   const [loading, setLoading] = useState(false);
 
   const handleScan = async (scannedData) => {
-    if (!scannedData || scannedData.length === 0 || loading) return;
+    if (!scannedData || loading) return;
+    
     try {
-      setLoading(true);
-      // 解析 QR Code 內容
-      const parsedData = JSON.parse(scannedData[0].rawValue);
-      const scannedUserId = parsedData.userId;
+      // 兼容不同版本的 scanner 回傳格式
+      const result = Array.isArray(scannedData) ? scannedData[0] : scannedData;
+      const rawValue = result?.rawValue || result?.text;
       
+      if (!rawValue) return;
+      
+      setLoading(true);
+      
+      let scannedUserId;
+      try {
+        // 嘗試解析 JSON 格式
+        const parsedData = JSON.parse(rawValue);
+        scannedUserId = parsedData.userId || parsedData.id || parsedData;
+      } catch (e) {
+        // 如果不是 JSON，則假設整個字串就是 userId (舊版或純文字格式)
+        scannedUserId = rawValue;
+      }
+      
+      if (typeof scannedUserId !== 'string' || scannedUserId.trim() === '') {
+        throw new Error('無法取得有效的用戶 ID');
+      }
+
       if (scannedUserId === user.id) {
         alert("不能掃描自己的 QR Code！");
         setLoading(false);
@@ -54,7 +72,8 @@ export default function QRCodeModal({ user, onClose, onMatchStarted }) {
       onMatchStarted();
     } catch (error) {
       console.error('Error starting match:', error);
-      alert("掃描失敗，請確定這是一個有效的雀友 QR Code");
+      const rawText = scannedData && scannedData[0] ? scannedData[0].rawValue : JSON.stringify(scannedData);
+      alert(`掃描失敗，請確定這是一個有效的雀友 QR Code。\n錯誤內容: ${error.message}\n掃描資料: ${rawText}`);
       setLoading(false);
     }
   };
