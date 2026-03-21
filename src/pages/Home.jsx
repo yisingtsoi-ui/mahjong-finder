@@ -9,7 +9,7 @@ export default function Home() {
   const [playStatus, setPlayStatus] = useState('none') // 'none' or 'playing'
   const [playUntil, setPlayUntil] = useState(null)
   const [nearbyUsers, setNearbyUsers] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true) // 預設為 true，等待首次檢查狀態
   const [user, setUser] = useState(null)
   
   // Modals state
@@ -63,10 +63,13 @@ export default function Home() {
 
         if (data.is_online && data.latitude && data.longitude && data.play_status !== 'playing') {
           fetchNearbyUsers(data.latitude, data.longitude, currentUserId)
+        } else {
+          setLoading(false) // 如果沒上線，就結束 loading 狀態
         }
       }
     } catch (err) {
       console.error('Error checking status:', err)
+      setLoading(false)
     }
   }
 
@@ -92,6 +95,8 @@ export default function Home() {
 
   useEffect(() => {
     let intervalId;
+    let subscription;
+
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
       if (user) {
@@ -101,11 +106,35 @@ export default function Home() {
         intervalId = setInterval(() => {
           checkUserStatus(user.id)
         }, 60000)
+
+        // 訂閱資料庫變更 (即時同步對方掃描結果)
+        subscription = supabase
+          .channel('profile_changes')
+          .on('postgres_changes', { 
+            event: 'UPDATE', 
+            schema: 'public', 
+            table: 'profiles',
+            filter: `id=eq.${user.id}` 
+          }, (payload) => {
+            if (payload.new.play_status === 'playing') {
+              setShowQRModal(prev => {
+                if (prev) {
+                  // 如果被掃描方正開著 QR 視窗，顯示成功提示
+                  alert('對方已成功掃描您的 QR Code！雙方已同步進入牌局。');
+                }
+                return false; // 關閉 QR 視窗
+              });
+            }
+            // 重新抓取最新狀態以更新畫面
+            checkUserStatus(user.id);
+          })
+          .subscribe();
       }
     })
     
     return () => {
       if (intervalId) clearInterval(intervalId)
+      if (subscription) supabase.removeChannel(subscription)
     }
   }, [])
 
@@ -195,9 +224,13 @@ export default function Home() {
                 : 'bg-white text-black hover:bg-gray-50'
             } ${loading ? 'opacity-70 cursor-wait' : ''}`}
           >
-            <Radio size={24} className={`mr-2 ${isOnline ? 'animate-pulse' : ''}`} />
+            {loading ? (
+              <span className="text-2xl mr-2 animate-spin">🀄</span>
+            ) : (
+              <Radio size={24} className={`mr-2 ${isOnline ? 'animate-pulse' : ''}`} />
+            )}
             <span className="text-xl font-bold tracking-wide">
-              {loading ? '處理中...' : isOnline ? '已上線' : '((o)) 點擊上線'}
+              {loading ? '洗牌中...' : isOnline ? '已上線' : '((o)) 點擊上線'}
             </span>
           </button>
           
