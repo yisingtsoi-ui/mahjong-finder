@@ -67,6 +67,10 @@ export default defineConfig({
             purpose: 'maskable'
           }
         ]
+      },
+      workbox: {
+        navigateFallback: '/index.html',
+        maximumFileSizeToCacheInBytes: 5242880
       }
     })
   ],
