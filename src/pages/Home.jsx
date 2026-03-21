@@ -7,7 +7,7 @@ import { isAfter } from 'date-fns'
 export default function Home() {
   const [isOnline, setIsOnline] = useState(false)
   const [playStatus, setPlayStatus] = useState('none') // 'none' or 'playing'
-  const [playUntil, setPlayUntil] = useState(null)
+  const [, setPlayUntil] = useState(null)
   const [nearbyUsers, setNearbyUsers] = useState([])
   const [loading, setLoading] = useState(true) // 預設為 true，等待首次檢查狀態
   const [user, setUser] = useState(null)

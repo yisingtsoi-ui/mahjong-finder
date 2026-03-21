@@ -32,7 +32,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['icon.svg', 'pwa-192x192.png', 'pwa-512x512.png'],
+      manifestFilename: 'manifest.json',
+      includeAssets: ['icon.svg', 'pwa-192x192.png', 'pwa-512x512.png', 'maskable-192x192.png', 'maskable-512x512.png'],
       manifest: {
         name: 'Mahjong Finder',
         short_name: 'Mahjong',
@@ -57,13 +58,13 @@ export default defineConfig({
             purpose: 'any'
           },
           {
-            src: '/pwa-192x192.png',
+            src: '/maskable-192x192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'maskable'
           },
           {
-            src: '/pwa-512x512.png',
+            src: '/maskable-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'

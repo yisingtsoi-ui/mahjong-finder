@@ -25,7 +25,7 @@ export default function QRCodeModal({ user, onClose, onMatchStarted }) {
         // 嘗試解析 JSON 格式
         const parsedData = JSON.parse(rawValue);
         scannedUserId = parsedData.userId || parsedData.id || parsedData;
-      } catch (e) {
+      } catch (_e) {
         // 如果不是 JSON，則假設整個字串就是 userId (舊版或純文字格式)
         scannedUserId = rawValue;
       }
