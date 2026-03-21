@@ -8,11 +8,21 @@ export default defineConfig({
     chunkSizeWarningLimit: 1500,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          leaflet: ['leaflet', 'react-leaflet'],
-          supabase: ['@supabase/supabase-js'],
-          ui: ['lucide-react', 'qrcode.react', '@yudiel/react-qr-scanner']
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+              return 'vendor';
+            }
+            if (id.includes('leaflet') || id.includes('react-leaflet')) {
+              return 'leaflet';
+            }
+            if (id.includes('@supabase')) {
+              return 'supabase';
+            }
+            if (id.includes('lucide-react') || id.includes('qrcode.react') || id.includes('@yudiel/react-qr-scanner')) {
+              return 'ui';
+            }
+          }
         }
       }
     }
