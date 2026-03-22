@@ -3,6 +3,7 @@ import { Users, Zap, QrCode, Radio, User, Handshake, Star } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import QRCodeModal from '../components/QRCodeModal'
 import { isAfter } from 'date-fns'
+import { Geolocation } from '@capacitor/geolocation'
 
 export default function Home() {
   const [isOnline, setIsOnline] = useState(false)
@@ -144,35 +145,42 @@ export default function Home() {
     setLoading(true)
     try {
       if (status) {
-        navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            const { latitude, longitude } = position.coords
-            
-            // 位置模糊化處理：加上隨機偏移量，保護用戶真實位置 (約偏移 ±200-300 米)
-            const fuzzOffset = () => (Math.random() - 0.5) * 0.005
-            const fuzzedLat = latitude + fuzzOffset()
-            const fuzzedLong = longitude + fuzzOffset()
-
-            const { error } = await supabase
-              .from('profiles')
-              .update({
-                is_online: true,
-                latitude: fuzzedLat,
-                longitude: fuzzedLong,
-                last_seen: new Date().toISOString(),
-              })
-              .eq('id', user.id)
-
-            if (error) throw error
-            setIsOnline(true)
-            fetchNearbyUsers(latitude, longitude, user.id)
-          },
-          (error) => {
-            console.error('Error getting location:', error)
-            alert('無法獲取位置，請允許定位權限')
-            setLoading(false)
+        try {
+          // Check and request permissions explicitly for Capacitor/Native
+          const checkPerms = await Geolocation.checkPermissions()
+          if (checkPerms.location !== 'granted') {
+            const reqPerms = await Geolocation.requestPermissions()
+            if (reqPerms.location !== 'granted') {
+              throw new Error('Permission denied')
+            }
           }
-        )
+
+          const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true })
+          const { latitude, longitude } = position.coords
+          
+          // 位置模糊化處理：加上隨機偏移量，保護用戶真實位置 (約偏移 ±200-300 米)
+          const fuzzOffset = () => (Math.random() - 0.5) * 0.005
+          const fuzzedLat = latitude + fuzzOffset()
+          const fuzzedLong = longitude + fuzzOffset()
+
+          const { error } = await supabase
+            .from('profiles')
+            .update({
+              is_online: true,
+              latitude: fuzzedLat,
+              longitude: fuzzedLong,
+              last_seen: new Date().toISOString(),
+            })
+            .eq('id', user.id)
+
+          if (error) throw error
+          setIsOnline(true)
+          fetchNearbyUsers(latitude, longitude, user.id)
+        } catch (error) {
+          console.error('Error getting location:', error)
+          alert('無法獲取位置，請允許定位權限')
+          setLoading(false)
+        }
       } else {
         const { error } = await supabase
           .from('profiles')
