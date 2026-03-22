@@ -7,14 +7,19 @@ export default function GameHistory() {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [myProfile, setMyProfile] = useState(null);
   
   const [reviewMatch, setReviewMatch] = useState(null);
   const [reviewTarget, setReviewTarget] = useState(null);
+  const [existingReview, setExistingReview] = useState(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
       if (user) {
+        supabase.from('profiles').select('username').eq('id', user.id).single().then(({data}) => {
+          setMyProfile(data);
+        });
         fetchHistory(user.id);
       }
     });
@@ -52,7 +57,7 @@ export default function GameHistory() {
       // 3. 獲取我對這些牌局的評價記錄
       const { data: myReviews, error: reviewsError } = await supabase
         .from('reviews')
-        .select('match_id, id')
+        .select('*')
         .eq('reviewer_id', userId)
         .in('match_id', matchIds);
 
@@ -62,15 +67,26 @@ export default function GameHistory() {
       const historyData = myMatches.map(m => {
         const matchOpponents = opponents.filter(o => o.match_id === m.match_id);
         const opponent = matchOpponents.length > 0 ? matchOpponents[0].profiles : null;
-        const matchReviews = myReviews.filter(r => r.match_id === m.match_id);
+        
+        // 如果有多次評價，取最新的
+        const matchReviews = myReviews
+          .filter(r => r.match_id === m.match_id)
+          .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+        
+        const latestReview = matchReviews.length > 0 ? matchReviews[0] : null;
+        const isEdited = latestReview?.comment?.includes('\u200B');
         
         return {
           id: m.match_id,
-          created_at: m.matches?.created_at,
+          created_at: m.matches?.created_at || new Date().toISOString(),
           opponent: opponent,
-          reviewCount: matchReviews.length // 計算已評價次數
+          latestReview,
+          isEdited
         };
       });
+
+      // 依時間排序 (最新的在最上面)
+      historyData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
       setMatches(historyData);
     } catch (err) {
@@ -80,15 +96,17 @@ export default function GameHistory() {
     }
   };
 
-  const handleReviewClick = (match, opponent) => {
+  const handleReviewClick = (match, opponent, review) => {
     setReviewMatch({ id: match.id });
     setReviewTarget(opponent);
+    setExistingReview(review);
   };
 
   const handleReviewSubmit = () => {
     // 提交評價後重新整理列表
     setReviewMatch(null);
     setReviewTarget(null);
+    setExistingReview(null);
     if (user) {
       fetchHistory(user.id);
     }
@@ -124,28 +142,46 @@ export default function GameHistory() {
                       <Clock size={14} />
                       {new Date(match.created_at).toLocaleDateString()} {new Date(match.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
-                    <div className="font-medium text-lg">
-                      雀友：{match.opponent?.username || '神秘雀友'}
+                    <div className="font-medium text-lg text-green-700">
+                      {myProfile?.username || '我'} <span className="text-gray-400 text-sm mx-1">vs</span> {match.opponent?.username || '神秘雀友'}
                     </div>
                   </div>
                 </div>
                 
+                {match.latestReview && (
+                  <div className="bg-green-50 p-3 rounded-xl mb-4 border border-green-100">
+                    <div className="flex justify-between mb-2">
+                      <div className="text-sm font-medium text-gray-700">我給出的評價：</div>
+                    </div>
+                    <div className="flex gap-4 mb-2">
+                      <div className="text-sm flex items-center gap-1"><span className="font-bold">牌速</span> <Star size={12} className="fill-yellow-400 text-yellow-400"/> {match.latestReview.speed_rating}</div>
+                      <div className="text-sm flex items-center gap-1"><span className="font-bold">牌技</span> <Star size={12} className="fill-yellow-400 text-yellow-400"/> {match.latestReview.skill_rating}</div>
+                      <div className="text-sm flex items-center gap-1"><span className="font-bold">牌品</span> <Star size={12} className="fill-yellow-400 text-yellow-400"/> {match.latestReview.manner_rating}</div>
+                    </div>
+                    {match.latestReview.comment && match.latestReview.comment.replace('\u200B', '').trim() && (
+                      <p className="text-sm text-gray-600 italic bg-white p-2 rounded-lg border border-gray-100">
+                        "{match.latestReview.comment.replace('\u200B', '')}"
+                      </p>
+                    )}
+                  </div>
+                )}
+                
                 <div className="flex items-center justify-between border-t border-gray-50 pt-4 mt-2">
                   <div className="text-sm text-gray-500">
-                    評價次數：{match.reviewCount} / 2
+                    {match.isEdited ? '評價次數：2 / 2' : match.latestReview ? '評價次數：1 / 2' : '評價次數：0 / 2'}
                   </div>
                   
                   <button
-                    onClick={() => handleReviewClick(match, match.opponent)}
-                    disabled={match.reviewCount >= 2 || !match.opponent}
+                    onClick={() => handleReviewClick(match, match.opponent, match.latestReview)}
+                    disabled={match.isEdited || !match.opponent}
                     className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-1 transition-colors ${
-                      match.reviewCount >= 2 || !match.opponent
+                      match.isEdited || !match.opponent
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         : 'bg-green-50 text-green-600 hover:bg-green-100'
                     }`}
                   >
-                    <Star size={16} className={match.reviewCount < 2 && match.opponent ? 'fill-current' : ''} />
-                    {match.reviewCount >= 2 ? '已達評價上限' : '留下評價'}
+                    <Star size={16} className={!match.isEdited && match.opponent ? 'fill-current' : ''} />
+                    {match.isEdited ? '已達評價上限' : match.latestReview ? '修改評價' : '留下評價'}
                   </button>
                 </div>
               </div>

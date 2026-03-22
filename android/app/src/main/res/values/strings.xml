@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MahjongFinder</string>
+    <string name="title_activity_main">MahjongFinder</string>
+    <string name="package_name">com.mahjongfinder.app</string>
+    <string name="custom_url_scheme">com.mahjongfinder.app</string>
+</resources>

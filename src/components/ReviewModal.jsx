@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { X, Zap, Handshake, Star } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
-export default function ReviewModal({ match, currentUser, targetUser, onClose, onSubmit }) {
-  const [speedRating, setSpeedRating] = useState(5);
-  const [skillRating, setSkillRating] = useState(5);
-  const [mannerRating, setMannerRating] = useState(5);
-  const [comment, setComment] = useState('');
+export default function ReviewModal({ match, currentUser, targetUser, existingReview, onClose, onSubmit }) {
+  const initialComment = existingReview?.comment ? existingReview.comment.replace('\u200B', '') : '';
+  const [speedRating, setSpeedRating] = useState(existingReview?.speed_rating || 5);
+  const [skillRating, setSkillRating] = useState(existingReview?.skill_rating || 5);
+  const [mannerRating, setMannerRating] = useState(existingReview?.manner_rating || 5);
+  const [comment, setComment] = useState(initialComment);
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
@@ -14,17 +15,30 @@ export default function ReviewModal({ match, currentUser, targetUser, onClose, o
     setSubmitting(true);
     
     try {
-      const { error } = await supabase.from('reviews').insert([{
-        reviewer_id: currentUser.id,
-        reviewee_id: targetUser.id,
-        match_id: match.id,
-        speed_rating: speedRating,
-        skill_rating: skillRating,
-        manner_rating: mannerRating,
-        comment
-      }]);
-
-      if (error) throw error;
+      if (existingReview?.id) {
+        // 第二次評價，覆蓋原來的紀錄並加上隱藏標記
+        const { error } = await supabase.from('reviews').update({
+          speed_rating: speedRating,
+          skill_rating: skillRating,
+          manner_rating: mannerRating,
+          comment: comment + '\u200B'
+        }).eq('id', existingReview.id);
+        
+        if (error) throw error;
+      } else {
+        // 第一次評價
+        const { error } = await supabase.from('reviews').insert([{
+          reviewer_id: currentUser.id,
+          reviewee_id: targetUser.id,
+          match_id: match.id,
+          speed_rating: speedRating,
+          skill_rating: skillRating,
+          manner_rating: mannerRating,
+          comment
+        }]);
+        
+        if (error) throw error;
+      }
       
       alert('感謝您的評分！');
       onSubmit();
