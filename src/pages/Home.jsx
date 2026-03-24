@@ -408,46 +408,6 @@ export default function Home() {
         />
       )}
 
-      {/* 開發測試用：一鍵模擬配對 */}
-      {isOnline && playStatus !== 'playing' && (
-        <button
-          onClick={async () => {
-            try {
-              if (!nearbyUsers.length) {
-                alert('附近沒有其他帳號！請先開啟瀏覽器「無痕模式」，註冊第二個測試帳號並點擊上線。');
-                return;
-              }
-              const testOpponentId = nearbyUsers[0].id;
-              
-              const { data: matchData, error: matchError } = await supabase
-                .from('matches').insert([{}]).select().single();
-              if (matchError) throw matchError;
-
-              await supabase.from('match_players').insert([
-                { match_id: matchData.id, user_id: user.id },
-                { match_id: matchData.id, user_id: testOpponentId }
-              ]);
-
-              const playUntil = new Date();
-              playUntil.setMinutes(playUntil.getMinutes() + 2); // 測試用 2 分鐘
-
-              await supabase.from('profiles').update({
-                play_status: 'playing',
-                play_until: playUntil.toISOString(),
-              }).in('id', [user.id, testOpponentId]);
-
-              alert('測試配對成功！已跳過掃碼，直接進入牌局狀態（2分鐘後結束）。');
-              checkUserStatus(user.id);
-            } catch (err) {
-              console.error(err);
-              alert('測試配對失敗: ' + err.message);
-            }
-          }}
-          className="fixed bottom-24 right-4 bg-red-600 text-white font-bold p-3 rounded-full shadow-lg border-2 border-black z-50 opacity-90 hover:opacity-100 active:scale-95 transition-transform"
-        >
-          🔧 測試配對
-        </button>
-      )}
     </div>
   )
 }
