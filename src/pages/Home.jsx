@@ -78,7 +78,7 @@ export default function Home() {
     const { data, error } = await supabase.rpc('get_nearby_users', {
       lat,
       long,
-      radius_meters: 5000,
+      radius_meters: 500000, // 擴大到 500 公里，避免電腦與手機定位誤差過大找不到人
     })
 
     if (error) {
@@ -147,16 +147,30 @@ export default function Home() {
       if (status) {
         try {
           // Check and request permissions explicitly for Capacitor/Native
-          const checkPerms = await Geolocation.checkPermissions()
-          if (checkPerms.location !== 'granted') {
-            const reqPerms = await Geolocation.requestPermissions()
-            if (reqPerms.location !== 'granted') {
-              throw new Error('Permission denied')
+          try {
+            const checkPerms = await Geolocation.checkPermissions()
+            if (checkPerms.location !== 'granted') {
+              const reqPerms = await Geolocation.requestPermissions()
+              if (reqPerms.location !== 'granted') {
+                console.warn('Permission denied by user')
+              }
             }
+          } catch (permErr) {
+            console.warn('Permission API not fully supported, proceeding anyway', permErr)
           }
 
-          const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true })
-          const { latitude, longitude } = position.coords
+          let latitude, longitude;
+          try {
+            const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 5000 })
+            latitude = position.coords.latitude
+            longitude = position.coords.longitude
+          } catch (posErr) {
+            console.warn('Failed to get real position, using fallback', posErr)
+            // 如果無法獲取位置 (常見於電腦開發環境)，使用預設位置(台北)，並提示使用者
+            alert('無法獲取真實位置（可能被瀏覽器阻擋），將使用預設位置（台北）進行測試。')
+            latitude = 25.0330
+            longitude = 121.5654
+          }
           
           // 位置模糊化處理：加上隨機偏移量，保護用戶真實位置 (約偏移 ±200-300 米)
           const fuzzOffset = () => (Math.random() - 0.5) * 0.005
