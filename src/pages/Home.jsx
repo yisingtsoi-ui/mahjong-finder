@@ -75,23 +75,73 @@ export default function Home() {
   }
 
   const fetchNearbyUsers = async (lat, long, currentUserId) => {
-    const { data, error } = await supabase.rpc('get_nearby_users', {
-      lat,
-      long,
-      radius_meters: 500000, // 擴大到 500 公里，避免電腦與手機定位誤差過大找不到人
-    })
+    try {
+      let users = [];
+      
+      // 直接取得所有在線且非遊玩中的玩家
+      const { data: profiles, error: profileErr } = await supabase
+        .from('profiles')
+        .select('id, username, latitude, longitude, contact_info, play_status, is_online')
+        .eq('is_online', true)
+        .neq('play_status', 'playing');
 
-    if (error) {
-      console.error('Error fetching nearby users:', error)
-    } else {
-      let users = data || []
-      if (currentUserId) {
-        users = users.filter(u => u.id !== currentUserId)
+      if (!profileErr && profiles) {
+        const calcDist = (lat1, lon1, lat2, lon2) => {
+          if (!lat1 || !lon1 || !lat2 || !lon2) return Infinity;
+          const R = 6371e3;
+          const dLat = (lat2-lat1) * Math.PI/180;
+          const dLon = (lon2-lon1) * Math.PI/180;
+          const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+          return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        };
+        users = profiles.map(u => ({
+          ...u,
+          distance_meters: calcDist(lat, long, u.latitude, u.longitude)
+        }));
       }
-      users.sort((a, b) => a.distance_meters - b.distance_meters)
-      setNearbyUsers(users.slice(0, 10))
+
+      if (currentUserId) {
+        users = users.filter(u => u.id !== currentUserId);
+      }
+      
+      // 排序：距離近到遠 (未知的會因為 Infinity 排到最後)
+      users.sort((a, b) => a.distance_meters - b.distance_meters);
+      let topUsers = users; // 顯示全部在線的人
+
+      // 2. 抓取真實評價與聯絡方式取代 Placeholder
+      if (topUsers.length > 0) {
+        const userIds = topUsers.map(u => u.id);
+        const [ { data: reviewsData }, { data: contactsData } ] = await Promise.all([
+          supabase.from('reviews').select('reviewee_id, speed_rating, skill_rating, manner_rating').in('reviewee_id', userIds),
+          supabase.from('profiles').select('id, contact_info').in('id', userIds)
+        ]);
+
+        topUsers = topUsers.map(u => {
+          let speed = '-', skill = '-', manner = '-';
+          if (reviewsData) {
+            const ur = reviewsData.filter(r => r.reviewee_id === u.id);
+            if (ur.length > 0) {
+              speed = (ur.reduce((s, r) => s + r.speed_rating, 0) / ur.length).toFixed(1);
+              skill = (ur.reduce((s, r) => s + r.skill_rating, 0) / ur.length).toFixed(1);
+              manner = (ur.reduce((s, r) => s + r.manner_rating, 0) / ur.length).toFixed(1);
+            }
+          }
+          let contact = u.contact_info;
+          if (!contact && contactsData) {
+            const c = contactsData.find(c => c.id === u.id);
+            if (c) contact = c.contact_info;
+          }
+          return { ...u, speed_rating: speed, skill_rating: skill, manner_rating: manner, contact_info: contact };
+        });
+      }
+
+      setNearbyUsers(topUsers);
+    } catch (err) {
+      console.error('Error fetching nearby users:', err);
+      setNearbyUsers([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false)
   }
 
   useEffect(() => {
@@ -165,11 +215,22 @@ export default function Home() {
             latitude = position.coords.latitude
             longitude = position.coords.longitude
           } catch (posErr) {
-            console.warn('Failed to get real position, using fallback', posErr)
-            // 如果無法獲取位置 (常見於電腦開發環境)，使用預設位置(台北)，並提示使用者
-            alert('無法獲取真實位置（可能被瀏覽器阻擋），將使用預設位置（台北）進行測試。')
-            latitude = 25.0330
-            longitude = 121.5654
+            console.warn('Failed to get real position, trying IP fallback:', posErr)
+            try {
+              // 使用 IP 定位作為桌面版/無權限時的動態 Fallback，避免寫死單一城市
+              const ipRes = await fetch('https://get.geojs.io/v1/ip/geo.json');
+              if (!ipRes.ok) throw new Error('IP Fetch failed');
+              const ipData = await ipRes.json();
+              if (ipData.latitude && ipData.longitude) {
+                latitude = parseFloat(ipData.latitude);
+                longitude = parseFloat(ipData.longitude);
+              } else {
+                throw new Error('Invalid IP data');
+              }
+            } catch (ipErr) {
+              console.error('IP fallback failed:', ipErr)
+              throw new Error('無法獲取真實位置，請確保瀏覽器或設備已開啟定位權限。')
+            }
           }
           
           // 位置模糊化處理：加上隨機偏移量，保護用戶真實位置 (約偏移 ±200-300 米)
@@ -273,12 +334,12 @@ export default function Home() {
           {isOnline && (
             <div className="mt-8 w-full">
               <h2 className="font-bold text-lg mb-4 flex items-center">
-                附近的雀友 ({nearbyUsers.length})
+                在綫的人 ({nearbyUsers.length})
               </h2>
 
               {nearbyUsers.length === 0 ? (
                 <div className="text-center py-8 font-bold text-gray-500 border-2 border-black border-dashed rounded-xl bg-white">
-                  附近暫時無人在線...
+                  暫時無人在線...
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -295,33 +356,36 @@ export default function Home() {
                           <div>
                             <div className="font-bold text-lg leading-tight">{u.username || '神秘雀友'}</div>
                             <div className="text-xs font-bold mt-1">
-                              距離 {Math.round(u.distance_meters)}m
+                              {u.distance_meters === Infinity ? '距離未知' : `距離 ${u.distance_meters > 1000 ? (u.distance_meters/1000).toFixed(1) + 'km' : Math.round(u.distance_meters) + 'm'}`}
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* 評價區塊 (Placeholder 數據) */}
+                      {/* 評價區塊 (真實數據) */}
                       <div className="flex justify-between items-center my-4 py-3 border-y-2 border-black">
                         <div className="flex-1 text-center">
                           <div className="flex justify-center mb-1"><Zap size={20} /></div>
-                          <div className="text-[10px] font-bold tracking-wider">牌速: -</div>
+                          <div className="text-[10px] font-bold tracking-wider">牌速: {u.speed_rating || '-'}</div>
                         </div>
                         <div className="w-[2px] h-8 bg-black"></div>
                         <div className="flex-1 text-center">
                           <div className="flex justify-center mb-1">
                             <span className="font-black text-lg leading-none" style={{height: '20px'}}>中</span>
                           </div>
-                          <div className="text-[10px] font-bold tracking-wider">牌技: -</div>
+                          <div className="text-[10px] font-bold tracking-wider">牌技: {u.skill_rating || '-'}</div>
                         </div>
                         <div className="w-[2px] h-8 bg-black"></div>
                         <div className="flex-1 text-center">
                           <div className="flex justify-center mb-1"><Handshake size={20} /></div>
-                          <div className="text-[10px] font-bold tracking-wider">牌品: -</div>
+                          <div className="text-[10px] font-bold tracking-wider">牌品: {u.manner_rating || '-'}</div>
                         </div>
                       </div>
 
-                      <button className="w-full border-2 border-black rounded-lg py-2 font-bold tracking-wider hover:bg-black hover:text-white transition-colors active:translate-y-[2px] bg-white">
+                      <button 
+                        onClick={() => alert(`${u.username || '神秘雀友'} 的聯絡方式：\n${u.contact_info || '尚未提供'}`)}
+                        className="w-full border-2 border-black rounded-lg py-2 font-bold tracking-wider hover:bg-black hover:text-white transition-colors active:translate-y-[2px] bg-white"
+                      >
                         查看聯絡方式
                       </button>
                     </div>
