@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Users, Zap, QrCode, Radio, User, Handshake, Star } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import QRCodeModal from '../components/QRCodeModal'
+import UserProfileModal from '../components/UserProfileModal'
 import { isAfter } from 'date-fns'
 import { Geolocation } from '@capacitor/geolocation'
 
@@ -15,6 +16,7 @@ export default function Home() {
   
   // Modals state
   const [showQRModal, setShowQRModal] = useState(false)
+  const [selectedUser, setSelectedUser] = useState(null)
 
   const checkUserStatus = async (currentUserId) => {
     try {
@@ -403,11 +405,17 @@ export default function Home() {
                         </div>
                       </div>
 
+                      {/* 聯絡資訊直接顯示 */}
+                      <div className="bg-[#F5F4EE] border-2 border-black rounded-lg p-3 mb-4 text-sm font-bold">
+                        <div className="text-gray-500 text-xs mb-1">聯絡方式</div>
+                        <div className="break-words">{u.contact_info || '尚未提供'}</div>
+                      </div>
+
                       <button 
-                        onClick={() => alert(`${u.username || '神秘雀友'} 的聯絡方式：\n${u.contact_info || '尚未提供'}`)}
+                        onClick={() => setSelectedUser(u)}
                         className="w-full border-2 border-black rounded-lg py-2 font-bold tracking-wider hover:bg-black hover:text-white transition-colors active:translate-y-[2px] bg-white"
                       >
-                        查看聯絡方式
+                        查看玩家評價
                       </button>
                     </div>
                   ))}
@@ -426,6 +434,13 @@ export default function Home() {
             setShowQRModal(false);
             checkUserStatus(user.id);
           }}
+        />
+      )}
+
+      {selectedUser && (
+        <UserProfileModal 
+          user={selectedUser}
+          onClose={() => setSelectedUser(null)}
         />
       )}
 

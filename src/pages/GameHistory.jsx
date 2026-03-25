@@ -31,11 +31,13 @@ export default function GameHistory() {
       // 1. 獲取用戶參與過的所有牌局
       const { data: myMatches, error: matchError } = await supabase
         .from('match_players')
-        .select('match_id, matches(created_at)')
-        .eq('user_id', userId)
-        .order('match_id', { ascending: false });
+        .select('match_id')
+        .eq('user_id', userId);
 
-      if (matchError) throw matchError;
+      if (matchError) {
+        console.error('Match players error:', matchError);
+        throw matchError;
+      }
       
       if (!myMatches || myMatches.length === 0) {
         setMatches([]);
@@ -44,6 +46,17 @@ export default function GameHistory() {
       }
 
       const matchIds = myMatches.map(m => m.match_id);
+
+      // 1.5 獲取牌局時間資訊
+      const { data: matchDetails, error: detailsError } = await supabase
+        .from('matches')
+        .select('id, created_at')
+        .in('id', matchIds);
+
+      if (detailsError) {
+        console.error('Matches details error:', detailsError);
+        throw detailsError;
+      }
 
       // 2. 獲取這些牌局中的對手玩家
       const { data: opponents, error: opponentsError } = await supabase
@@ -64,9 +77,13 @@ export default function GameHistory() {
       if (reviewsError) throw reviewsError;
 
       // 組合數據
-      const historyData = myMatches.map(m => {
+      let historyData = myMatches.map(m => {
         const matchOpponents = opponents.filter(o => o.match_id === m.match_id);
         const opponent = matchOpponents.length > 0 ? matchOpponents[0].profiles : null;
+        
+        // 取得對應的牌局詳細資訊
+        const details = matchDetails?.find(d => d.id === m.match_id);
+        const createdAt = details?.created_at || new Date().toISOString();
         
         // 如果有多次評價，取最新的
         const matchReviews = myReviews
@@ -78,11 +95,20 @@ export default function GameHistory() {
         
         return {
           id: m.match_id,
-          created_at: m.matches?.created_at || new Date().toISOString(),
+          created_at: createdAt,
           opponent: opponent,
           latestReview,
           isEdited
         };
+      });
+
+      // 過濾掉還在進行中的牌局 (建立時間在 2 小時內)
+      // 因為用戶要求：「當用戶的狀態脫離了對局中後，系統就要在“歷史牌局”中顯示出記錄」
+      const now = new Date();
+      historyData = historyData.filter(match => {
+        const matchTime = new Date(match.created_at);
+        const hoursDiff = (now - matchTime) / (1000 * 60 * 60);
+        return hoursDiff >= 2; // 超過兩小時才算歷史牌局
       });
 
       // 依時間排序 (最新的在最上面)

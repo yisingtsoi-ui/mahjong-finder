@@ -3,7 +3,8 @@ import { supabase } from '../lib/supabase'
 import { Star, Zap, Handshake } from 'lucide-react'
 
 export default function Profile() {
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
+  const [isInitializing, setIsInitializing] = useState(true)
   const [editing, setEditing] = useState(false)
   const [profile, setProfile] = useState({
     username: '',
@@ -22,59 +23,48 @@ export default function Profile() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         setUserId(user.id)
-        fetchProfile(user.id)
+        fetchProfile(user.id).finally(() => setIsInitializing(false))
+      } else {
+        setIsInitializing(false)
       }
     })
   }, [])
 
   const fetchProfile = async (id) => {
     try {
-      setLoading(true)
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', id)
-        .single()
+      // 準備所有查詢
+      const profilePromise = supabase.from('profiles').select('*').eq('id', id).single()
+      const leaderboardPromise = supabase.from('leaderboard_stats').select('user_id').eq('user_id', id).single()
+      const reviewsPromise = supabase.from('user_recent_reviews').select('*').eq('reviewee_id', id).limit(10)
+      const statsPromise = supabase.from('reviews').select('speed_rating, skill_rating, manner_rating').eq('reviewee_id', id)
 
-      if (error && error.code !== 'PGRST116') throw error
-      if (data) {
+      // 同時執行所有查詢，大幅加快載入速度
+      const [
+        { data: profileData, error: profileError },
+        { data: leaderboardData },
+        { data: reviewsData, error: reviewsError },
+        { data: statsData, error: statsError }
+      ] = await Promise.all([profilePromise, leaderboardPromise, reviewsPromise, statsPromise])
+
+      if (profileError && profileError.code !== 'PGRST116') throw profileError
+      
+      // 一次性更新所有狀態，避免畫面多次閃爍
+      if (profileData) {
         setProfile({
-          username: data.username || '',
-          contact_info: data.contact_info || '',
-          styles: data.mahjong_styles || [],
-          bio: data.bio || '',
-          motto: data.motto || '',
-          motto_set: data.motto_set || false
+          username: profileData.username || '',
+          contact_info: profileData.contact_info || '',
+          styles: profileData.mahjong_styles || [],
+          bio: profileData.bio || '',
+          motto: profileData.motto || '',
+          motto_set: profileData.motto_set || false
         })
       }
 
-      // 檢查是否在排行榜內
-      const { data: leaderboardData } = await supabase
-        .from('leaderboard_stats')
-        .select('user_id')
-        .eq('user_id', id)
-        .single()
-        
-      if (leaderboardData) {
-        setIsTopPlayer(true)
-      }
-
-      // Fetch recent reviews
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from('user_recent_reviews')
-        .select('*')
-        .eq('reviewee_id', id)
-        .limit(10)
+      setIsTopPlayer(!!leaderboardData)
 
       if (!reviewsError && reviewsData) {
         setReviews(reviewsData)
       }
-
-      // Fetch all reviews for stats
-      const { data: statsData, error: statsError } = await supabase
-        .from('reviews')
-        .select('speed_rating, skill_rating, manner_rating')
-        .eq('reviewee_id', id)
 
       if (!statsError && statsData) {
         const count = statsData.length
@@ -101,8 +91,6 @@ export default function Profile() {
 
     } catch (error) {
       console.error('Error loading profile:', error)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -168,7 +156,7 @@ export default function Profile() {
     window.location.reload()
   }
 
-  if (loading && !userId) {
+  if (isInitializing) {
     return (
       <div className="flex flex-col h-screen items-center justify-center bg-[#F5F4EE] space-y-4">
         <span className="text-5xl animate-spin">🀄</span>
