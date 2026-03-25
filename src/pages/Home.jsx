@@ -196,40 +196,61 @@ export default function Home() {
     try {
       if (status) {
         try {
-          // Check and request permissions explicitly for Capacitor/Native
+          let latitude, longitude;
+          
+          // 1. 先嘗試 Capacitor Native 權限請求 (僅在 Native 環境有效，Web 會拋錯被忽略)
           try {
-            const checkPerms = await Geolocation.checkPermissions()
+            const checkPerms = await Geolocation.checkPermissions();
             if (checkPerms.location !== 'granted') {
-              const reqPerms = await Geolocation.requestPermissions()
-              if (reqPerms.location !== 'granted') {
-                console.warn('Permission denied by user')
-              }
+              await Geolocation.requestPermissions();
             }
           } catch (permErr) {
-            console.warn('Permission API not fully supported, proceeding anyway', permErr)
+            console.warn('Capacitor permissions API not fully supported (likely Web), proceeding to browser prompt');
           }
 
-          let latitude, longitude;
+          // 2. 建立原生瀏覽器 Geolocation Promise (這是最能穩定觸發網頁版彈窗的方法)
+          const getWebPosition = () => new Promise((resolve, reject) => {
+            if (navigator.geolocation) {
+              // 網頁版需要給予足夠的時間讓用戶點擊「允許」，timeout 設為 15000 (15秒)
+              navigator.geolocation.getCurrentPosition(resolve, reject, { 
+                enableHighAccuracy: true, 
+                timeout: 15000, 
+                maximumAge: 0 
+              });
+            } else {
+              reject(new Error('Browser does not support HTML5 geolocation'));
+            }
+          });
+
           try {
-            const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 5000 })
-            latitude = position.coords.latitude
-            longitude = position.coords.longitude
-          } catch (posErr) {
-            console.warn('Failed to get real position, trying IP fallback:', posErr)
+            // 優先使用原生 API (適用於網頁版與部分 PWA)
+            const pos = await getWebPosition();
+            latitude = pos.coords.latitude;
+            longitude = pos.coords.longitude;
+          } catch (webErr) {
+            console.warn('Web geolocation failed or timed out, trying Capacitor API:', webErr);
             try {
-              // 使用 IP 定位作為桌面版/無權限時的動態 Fallback，避免寫死單一城市
-              const ipRes = await fetch('https://get.geojs.io/v1/ip/geo.json');
-              if (!ipRes.ok) throw new Error('IP Fetch failed');
-              const ipData = await ipRes.json();
-              if (ipData.latitude && ipData.longitude) {
-                latitude = parseFloat(ipData.latitude);
-                longitude = parseFloat(ipData.longitude);
-              } else {
-                throw new Error('Invalid IP data');
+              // 備用方案：使用 Capacitor API (適用於 APK 或原生環境)
+              const capPos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000 });
+              latitude = capPos.coords.latitude;
+              longitude = capPos.coords.longitude;
+            } catch (posErr) {
+              console.warn('Failed to get real position from both Web and Capacitor, trying IP fallback:', posErr)
+              try {
+                // 使用 IP 定位作為桌面版/無權限時的動態 Fallback，避免寫死單一城市
+                const ipRes = await fetch('https://get.geojs.io/v1/ip/geo.json');
+                if (!ipRes.ok) throw new Error('IP Fetch failed');
+                const ipData = await ipRes.json();
+                if (ipData.latitude && ipData.longitude) {
+                  latitude = parseFloat(ipData.latitude);
+                  longitude = parseFloat(ipData.longitude);
+                } else {
+                  throw new Error('Invalid IP data');
+                }
+              } catch (ipErr) {
+                console.error('IP fallback failed:', ipErr)
+                throw new Error('無法獲取真實位置，請確保瀏覽器或設備已開啟定位權限。')
               }
-            } catch (ipErr) {
-              console.error('IP fallback failed:', ipErr)
-              throw new Error('無法獲取真實位置，請確保瀏覽器或設備已開啟定位權限。')
             }
           }
           

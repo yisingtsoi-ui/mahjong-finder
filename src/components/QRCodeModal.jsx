@@ -118,6 +118,12 @@ export default function QRCodeModal({ user, onClose, onMatchStarted }) {
               ) : (
                 <Scanner 
                   onScan={handleScan} 
+                  onError={(error) => {
+                    console.error('Scanner error:', error);
+                    if (error?.message?.includes('Permission') || error?.name === 'NotAllowedError') {
+                      alert('無法開啟相機，請確保您已允許瀏覽器或應用程式使用相機權限！');
+                    }
+                  }}
                   components={{ audio: false, finder: false }}
                   allowMultiple={true}
                 />
