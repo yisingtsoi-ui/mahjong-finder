@@ -309,7 +309,7 @@ export default function Home() {
       {isOnline && playStatus !== 'playing' && (
         <div className="-mx-4 w-[calc(100%+2rem)] bg-black text-white py-1.5 mb-6 border-y-2 border-black overflow-hidden whitespace-nowrap shadow-brutal-sm">
           <div className="inline-block animate-marquee font-bold tracking-widest text-sm">
-            東風位、南風位、有人正在聽牌... 雷達持續掃描中... 🀄 尋找最近的雀友...
+            溫馨提醒：打牌純屬娛樂，請提防網路騙局，切勿沉迷賭博，並謹慎處理金錢往來... 🀄 尋找最近的雀友...
           </div>
         </div>
       )}
@@ -350,9 +350,11 @@ export default function Home() {
             </span>
           </button>
           
-          <div className={`text-center mt-3 font-bold text-sm tracking-widest ${isOnline ? 'text-green-600' : 'text-gray-500'}`}>
-            {isOnline ? '目前在線 (發送訊號中)' : '目前離線 (隱身模式)'}
-          </div>
+          {isOnline && (
+            <div className="text-center mt-3 font-bold text-sm tracking-widest text-green-600">
+              目前在線
+            </div>
+          )}
 
           {isOnline && (
             <button 

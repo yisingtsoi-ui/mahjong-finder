@@ -18,7 +18,7 @@ export default function Profile() {
   const [reviews, setReviews] = useState([])
   const [stats, setStats] = useState({ speed: 0, skill: 0, manner: 0, count: 0, overall: 0 })
   const [userId, setUserId] = useState(null)
-  const [isTopPlayer, setIsTopPlayer] = useState(false)
+  const [userRank, setUserRank] = useState(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -35,7 +35,7 @@ export default function Profile() {
     try {
       // 準備所有查詢
       const profilePromise = supabase.from('profiles').select('*').eq('id', id).single()
-      const leaderboardPromise = supabase.from('leaderboard_stats').select('user_id').eq('user_id', id).single()
+      const leaderboardPromise = supabase.from('leaderboard_stats').select('rank').eq('user_id', id).single()
       const reviewsPromise = supabase.from('user_recent_reviews').select('*').eq('reviewee_id', id).limit(10)
       const statsPromise = supabase.from('reviews').select('speed_rating, skill_rating, manner_rating').eq('reviewee_id', id)
 
@@ -61,7 +61,11 @@ export default function Profile() {
         })
       }
 
-      setIsTopPlayer(!!leaderboardData)
+      if (leaderboardData) {
+        setUserRank(leaderboardData.rank)
+      } else {
+        setUserRank(null)
+      }
 
       if (!reviewsError && reviewsData) {
         setReviews(reviewsData)
@@ -174,11 +178,27 @@ export default function Profile() {
         </button>
       </div>
 
-      <div className={`bg-white rounded-md border-2 border-black shadow-tile p-8 mb-8 relative ${isTopPlayer ? 'bg-gradient-to-br from-yellow-100 to-yellow-300' : ''}`}>
+      <div className={`bg-white rounded-md border-2 border-black shadow-tile p-8 mb-8 relative ${userRank && userRank <= 3 ? 'bg-gradient-to-br from-yellow-100 to-yellow-300' : ''}`}>
         <div className="flex flex-col items-center mb-6">
           <div className="w-24 h-24 bg-[#F5F4EE] border-4 border-black rounded-full flex items-center justify-center text-4xl mb-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             🀄
           </div>
+          {userRank && userRank <= 100 && !editing && (
+            <div className={`px-3 py-1 text-sm font-black border-2 border-black shadow-brutal-sm mb-2 ${
+              userRank === 1 ? 'bg-yellow-400 text-black' :
+              userRank === 2 ? 'bg-yellow-400 text-black' :
+              userRank === 3 ? 'bg-yellow-400 text-black' :
+              userRank <= 20 ? 'bg-red-500 text-white' :
+              userRank <= 60 ? 'bg-indigo-900 text-white' :
+              'bg-gray-700 text-white'
+            }`}>
+              {userRank === 1 ? '雀神' : 
+               userRank === 2 ? '雀聖' : 
+               userRank === 3 ? '雀王' : 
+               userRank <= 20 ? '雀將' : 
+               userRank <= 60 ? '雀豪' : '雀俠'}
+            </div>
+          )}
           {editing ? (
             <input
               className="text-2xl font-black text-center border-b-4 border-black focus:outline-none w-full bg-transparent placeholder:text-black/50"
@@ -211,9 +231,9 @@ export default function Profile() {
           )}
 
           {/* 雀王格言區塊 */}
-          {isTopPlayer && (
+          {(userRank && userRank <= 100) && (
             <div className="mt-6 w-full p-5 border-4 border-black bg-white shadow-brutal transform -rotate-1">
-              <div className="text-xs font-black tracking-widest bg-black text-white inline-block px-2 py-1 mb-2 absolute -top-3 -left-2 rotate-3">雀王格言</div>
+              <div className="text-xs font-black tracking-widest bg-black text-white inline-block px-2 py-1 mb-2 absolute -top-3 -left-2 rotate-3">高手格言</div>
               {editing && !profile.motto_set ? (
                 <div>
                   <textarea

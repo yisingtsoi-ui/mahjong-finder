@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 export default function UserProfileModal({ user, onClose }) {
   const [profile, setProfile] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [userRank, setUserRank] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,6 +35,17 @@ export default function UserProfileModal({ user, onClose }) {
         if (reviewsData) {
           setReviews(reviewsData);
         }
+
+        // 抓取排行榜名次
+        const { data: rankData } = await supabase
+          .from('leaderboard_stats')
+          .select('rank')
+          .eq('user_id', user.id)
+          .single();
+
+        if (rankData) {
+          setUserRank(rankData.rank);
+        }
       } catch (err) {
         console.error('Error fetching user details:', err);
       } finally {
@@ -50,9 +62,27 @@ export default function UserProfileModal({ user, onClose }) {
         
         {/* 頂部標題列 (固定) */}
         <div className="p-4 border-b-2 border-black flex justify-between items-center bg-[#F5F4EE] rounded-t-lg shrink-0">
-          <h2 className="text-xl font-black tracking-widest flex items-center gap-2">
-            <User size={24} /> {user.username || '神秘雀友'}
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-black tracking-widest flex items-center gap-2">
+              <User size={24} /> {user.username || '神秘雀友'}
+            </h2>
+            {userRank && userRank <= 100 && (
+              <span className={`px-2 py-0.5 text-xs font-black border-2 border-black shadow-brutal-sm ${
+                userRank === 1 ? 'bg-yellow-400 text-black' :
+                userRank === 2 ? 'bg-yellow-400 text-black' :
+                userRank === 3 ? 'bg-yellow-400 text-black' :
+                userRank <= 20 ? 'bg-red-500 text-white' :
+                userRank <= 60 ? 'bg-indigo-900 text-white' :
+                'bg-gray-700 text-white'
+              }`}>
+                {userRank === 1 ? '雀神' : 
+                 userRank === 2 ? '雀聖' : 
+                 userRank === 3 ? '雀王' : 
+                 userRank <= 20 ? '雀將' : 
+                 userRank <= 60 ? '雀豪' : '雀俠'}
+              </span>
+            )}
+          </div>
           <button onClick={onClose} className="text-black hover:scale-110 transition-transform">
             <X size={24} strokeWidth={3} />
           </button>
