@@ -303,16 +303,26 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#F5F4EE] pb-24 px-4 pt-6 font-sans text-gray-900">
-      <div className="flex items-center justify-center mb-8 border-b-2 border-black pb-4">
-        <div className="border-2 border-black rounded p-1 mr-3 bg-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+    <div className="flex flex-col min-h-screen bg-[#F5F4EE] pb-24 px-4 pt-4 font-sans text-gray-900 overflow-x-hidden">
+      
+      {/* Marquee */}
+      {isOnline && playStatus !== 'playing' && (
+        <div className="-mx-4 w-[calc(100%+2rem)] bg-black text-white py-1.5 mb-6 border-y-2 border-black overflow-hidden whitespace-nowrap shadow-brutal-sm">
+          <div className="inline-block animate-marquee font-bold tracking-widest text-sm">
+            東風位、南風位、有人正在聽牌... 雷達持續掃描中... 🀄 尋找最近的雀友...
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center justify-center mb-8 border-b-2 border-black pb-4 mt-2">
+        <div className="border-2 border-black rounded-md p-1 mr-3 bg-white shadow-tile">
           <span className="font-black text-xl leading-none block text-green-600">發</span>
         </div>
         <h1 className="text-2xl font-black tracking-widest">MAHJONG FINDER</h1>
       </div>
 
       {playStatus === 'playing' ? (
-        <div className="w-full bg-white p-6 rounded-xl border-2 border-black flex flex-col items-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+        <div className="w-full bg-white p-6 rounded-md border-2 border-black flex flex-col items-center shadow-tile">
           <div className="w-16 h-16 border-2 border-black bg-[#F5F4EE] rounded-full flex items-center justify-center mb-4">
             <span className="text-3xl font-black text-red-600">中</span>
           </div>
@@ -324,30 +334,30 @@ export default function Home() {
           <button
             onClick={toggleOnline}
             disabled={loading}
-            className={`w-full border-2 border-black rounded-xl py-5 flex items-center justify-center transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-[0px_0px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 ${
+            className={`w-full border-2 border-black rounded-md py-5 flex items-center justify-center transition-all duration-200 shadow-brutal active:shadow-brutal-active ${
               isOnline
                 ? 'bg-black text-white'
-                : 'bg-white text-black hover:bg-gray-50'
+                : 'bg-gray-300 text-gray-600 grayscale'
             } ${loading ? 'opacity-70 cursor-wait' : ''}`}
           >
             {loading ? (
               <span className="text-2xl mr-2 animate-spin">🀄</span>
             ) : (
-              <Radio size={24} className={`mr-2 ${isOnline ? 'animate-pulse' : ''}`} />
+              <Radio size={24} className={`mr-2 ${isOnline ? 'animate-neon text-green-400' : ''}`} />
             )}
-            <span className="text-xl font-bold tracking-wide">
-              {loading ? '洗牌中...' : isOnline ? '已上線' : '((o)) 點擊上線'}
+            <span className={`text-xl font-black tracking-wide ${isOnline ? 'animate-neon text-green-400' : ''}`}>
+              {loading ? '洗牌中...' : isOnline ? '雷達掃描中...' : '((o)) 點擊上線'}
             </span>
           </button>
           
-          <div className={`text-center mt-3 font-bold text-sm tracking-widest ${isOnline ? 'text-black' : 'text-red-600'}`}>
-            {isOnline ? '目前在線' : '目前離線'}
+          <div className={`text-center mt-3 font-bold text-sm tracking-widest ${isOnline ? 'text-green-600' : 'text-gray-500'}`}>
+            {isOnline ? '目前在線 (發送訊號中)' : '目前離線 (隱身模式)'}
           </div>
 
           {isOnline && (
             <button 
               onClick={() => setShowQRModal(true)}
-              className="mt-6 w-full bg-white text-black font-bold py-3 px-6 rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex justify-center items-center gap-2 hover:bg-gray-50 transition-all active:translate-y-1 active:shadow-none"
+              className="mt-6 w-full bg-white text-black font-black py-4 px-6 rounded-md border-2 border-black shadow-brutal flex justify-center items-center gap-2 hover:bg-gray-50 transition-all active:shadow-brutal-active"
             >
               <QrCode size={20} />
               到達對局 (掃描/顯示 QR)
@@ -369,16 +379,17 @@ export default function Home() {
                   {nearbyUsers.map((u) => (
                     <div
                       key={u.id}
-                      className="bg-white border-2 border-black rounded-xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                      className="bg-white border-2 border-black rounded-md p-5 shadow-tile mb-4"
                     >
                       <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 border-2 border-black rounded-full flex items-center justify-center bg-[#F5F4EE]">
-                            <User size={24} />
+                        <div className="flex items-center gap-4">
+                          <div className="w-14 h-14 border-2 border-black rounded-full flex items-center justify-center bg-[#F5F4EE] shadow-brutal-sm">
+                            <User size={28} />
                           </div>
                           <div>
-                            <div className="font-bold text-lg leading-tight">{u.username || '神秘雀友'}</div>
-                            <div className="text-xs font-bold mt-1">
+                            <div className="font-black text-xl leading-tight">{u.username || '神秘雀友'}</div>
+                            <div className="text-sm font-bold mt-1 text-blue-600 flex items-center gap-1">
+                              <Radio size={14} className="animate-pulse" />
                               {u.distance_meters === Infinity ? '距離未知' : `距離 ${u.distance_meters > 1000 ? (u.distance_meters/1000).toFixed(1) + 'km' : Math.round(u.distance_meters) + 'm'}`}
                             </div>
                           </div>
@@ -413,7 +424,7 @@ export default function Home() {
 
                       <button 
                         onClick={() => setSelectedUser(u)}
-                        className="w-full border-2 border-black rounded-lg py-2 font-bold tracking-wider hover:bg-black hover:text-white transition-colors active:translate-y-[2px] bg-white"
+                        className="w-full border-2 border-black rounded-md py-3 font-black tracking-widest hover:bg-black hover:text-white transition-colors active:translate-y-[2px] bg-[#F5F4EE] shadow-brutal-sm"
                       >
                         查看玩家評價
                       </button>

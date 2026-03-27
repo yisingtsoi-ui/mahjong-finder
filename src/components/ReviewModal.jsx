@@ -52,9 +52,9 @@ export default function ReviewModal({ match, currentUser, targetUser, existingRe
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 font-sans text-black">
-      <div className="bg-[#F5F4EE] border-4 border-black rounded-xl w-full max-w-sm p-6 relative shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-        <button onClick={onClose} className="absolute right-4 top-4 text-black hover:scale-110 transition-transform">
-          <X size={24} strokeWidth={3} />
+      <div className="bg-[#F5F4EE] border-4 border-black rounded-md w-full max-w-sm p-8 relative shadow-brutal">
+        <button onClick={onClose} className="absolute right-4 top-4 text-black hover:scale-110 transition-transform bg-white rounded-sm border-2 border-black p-1 shadow-brutal-sm">
+          <X size={20} strokeWidth={3} />
         </button>
         
         <h2 className="text-2xl font-black text-center mb-2 tracking-widest">牌局結束</h2>
@@ -99,10 +99,10 @@ export default function ReviewModal({ match, currentUser, targetUser, existingRe
           </div>
         </div>
         
-        <div className="mb-6">
-          <label className="block text-sm font-black mb-2 tracking-widest">其他評價 (選填)</label>
+        <div className="mb-8">
+          <label className="block text-sm font-black mb-3 tracking-widest">其他評價 (選填)</label>
           <textarea 
-            className="w-full bg-white border-2 border-black rounded-lg p-3 text-black font-medium focus:ring-0 focus:outline-none resize-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+            className="w-full bg-white border-4 border-black rounded-md p-4 text-black font-bold focus:ring-0 focus:outline-none resize-none shadow-brutal-sm"
             rows="3"
             placeholder="這位雀友打牌風格如何？"
             value={comment}
@@ -113,7 +113,7 @@ export default function ReviewModal({ match, currentUser, targetUser, existingRe
         <button 
           onClick={handleSubmit}
           disabled={submitting}
-          className={`w-full py-4 rounded-xl font-black text-lg tracking-widest border-2 border-black transition-all active:translate-y-[2px] active:shadow-none ${submitting ? 'bg-gray-300 text-gray-500 shadow-none' : 'bg-white text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-black hover:text-white'}`}
+          className={`w-full py-4 rounded-md font-black text-lg tracking-widest border-4 border-black transition-all active:shadow-brutal-active ${submitting ? 'bg-gray-300 text-gray-500 shadow-none' : 'bg-white text-black shadow-brutal hover:bg-black hover:text-white'}`}
         >
           {submitting ? '提交中...' : '提交評價'}
         </button>

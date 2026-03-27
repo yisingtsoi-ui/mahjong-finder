@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { History, Star, Clock } from 'lucide-react';
 import ReviewModal from '../components/ReviewModal';
+import MahjongLoading from '../components/MahjongLoading';
 
 export default function GameHistory() {
   const [matches, setMatches] = useState([]);
@@ -164,75 +165,74 @@ export default function GameHistory() {
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-50 pb-20 px-4 pt-8">
+    <div className="flex flex-col items-center min-h-screen bg-[#F5F4EE] pb-24 px-4 pt-6 font-sans text-black">
       <div className="w-full max-w-md">
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <History className="text-green-600" size={28} />
-          <h1 className="text-2xl font-bold text-gray-800">歷史牌局</h1>
+        <div className="flex items-center justify-center mb-8 border-b-2 border-black pb-4">
+          <div className="border-2 border-black rounded-md p-1 mr-3 bg-white shadow-tile">
+            <History className="text-green-600" size={24} strokeWidth={3} />
+          </div>
+          <h1 className="text-2xl font-black tracking-widest">歷史牌局</h1>
         </div>
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-16 space-y-4">
-            <span className="text-4xl animate-spin">🀄</span>
-            <span className="font-bold tracking-widest text-gray-500">翻查戰績中...</span>
-          </div>
+          <MahjongLoading text="翻查戰績中..." />
         ) : matches.length === 0 ? (
-          <div className="bg-white p-8 rounded-2xl shadow-sm text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="bg-white p-8 rounded-md border-2 border-black shadow-tile text-center">
+            <div className="w-16 h-16 border-2 border-black bg-[#F5F4EE] rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-3xl">🀄</span>
             </div>
-            <p className="text-gray-500">尚未有任何牌局紀錄</p>
+            <p className="font-black tracking-widest text-gray-500">尚未有任何牌局紀錄</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {matches.map(match => (
-              <div key={match.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+              <div key={match.id} className="bg-white p-6 rounded-md border-2 border-black shadow-tile">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <div className="text-sm text-gray-500 flex items-center gap-1 mb-1">
-                      <Clock size={14} />
+                    <div className="text-xs font-bold text-blue-600 flex items-center gap-1 mb-2 tracking-widest">
+                      <Clock size={14} strokeWidth={3} />
                       {new Date(match.created_at).toLocaleDateString()} {new Date(match.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
-                    <div className="font-medium text-lg text-green-700">
-                      {myProfile?.username || '我'} <span className="text-gray-400 text-sm mx-1">vs</span> {match.opponent?.username || '神秘雀友'}
+                    <div className="font-black text-xl leading-tight">
+                      {myProfile?.username || '我'} <span className="text-gray-400 text-sm mx-2">vs</span> {match.opponent?.username || '神秘雀友'}
                     </div>
                   </div>
                 </div>
                 
                 {match.latestReview && (
-                  <div className="bg-green-50 p-3 rounded-xl mb-4 border border-green-100">
-                    <div className="flex justify-between mb-2">
-                      <div className="text-sm font-medium text-gray-700">我給出的評價：</div>
+                  <div className="bg-[#F5F4EE] p-4 rounded-md mb-4 border-2 border-black">
+                    <div className="flex justify-between mb-3">
+                      <div className="text-sm font-black tracking-widest">我給出的評價：</div>
                     </div>
-                    <div className="flex gap-4 mb-2">
-                      <div className="text-sm flex items-center gap-1"><span className="font-bold">牌速</span> <Star size={12} className="fill-yellow-400 text-yellow-400"/> {match.latestReview.speed_rating}</div>
-                      <div className="text-sm flex items-center gap-1"><span className="font-bold">牌技</span> <Star size={12} className="fill-yellow-400 text-yellow-400"/> {match.latestReview.skill_rating}</div>
-                      <div className="text-sm flex items-center gap-1"><span className="font-bold">牌品</span> <Star size={12} className="fill-yellow-400 text-yellow-400"/> {match.latestReview.manner_rating}</div>
+                    <div className="flex gap-4 mb-3">
+                      <div className="text-xs font-bold flex items-center gap-1">牌速 <Star size={12} strokeWidth={2} className="fill-yellow-400 text-black"/> {match.latestReview.speed_rating}</div>
+                      <div className="text-xs font-bold flex items-center gap-1 text-red-600">牌技 <Star size={12} strokeWidth={2} className="fill-yellow-400 text-black"/> {match.latestReview.skill_rating}</div>
+                      <div className="text-xs font-bold flex items-center gap-1">牌品 <Star size={12} strokeWidth={2} className="fill-yellow-400 text-black"/> {match.latestReview.manner_rating}</div>
                     </div>
                     {match.latestReview.comment && match.latestReview.comment.replace('\u200B', '').trim() && (
-                      <p className="text-sm text-gray-600 italic bg-white p-2 rounded-lg border border-gray-100">
+                      <p className="text-sm font-bold bg-white p-3 rounded-md border-2 border-black">
                         "{match.latestReview.comment.replace('\u200B', '')}"
                       </p>
                     )}
                   </div>
                 )}
                 
-                <div className="flex items-center justify-between border-t border-gray-50 pt-4 mt-2">
-                  <div className="text-sm text-gray-500">
+                <div className="flex items-center justify-between border-t-2 border-black pt-4 mt-2">
+                  <div className="text-xs font-black tracking-widest">
                     {match.isEdited ? '評價次數：2 / 2' : match.latestReview ? '評價次數：1 / 2' : '評價次數：0 / 2'}
                   </div>
                   
                   <button
                     onClick={() => handleReviewClick(match, match.opponent, match.latestReview)}
                     disabled={match.isEdited || !match.opponent}
-                    className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-1 transition-colors ${
+                    className={`px-4 py-2 rounded-md text-sm font-black tracking-widest flex items-center gap-2 border-2 border-black transition-transform ${
                       match.isEdited || !match.opponent
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'bg-green-50 text-green-600 hover:bg-green-100'
+                        ? 'bg-gray-200 text-gray-500 grayscale cursor-not-allowed'
+                        : 'bg-white text-black shadow-brutal-sm hover:bg-black hover:text-white active:translate-y-[2px] active:shadow-none'
                     }`}
                   >
-                    <Star size={16} className={!match.isEdited && match.opponent ? 'fill-current' : ''} />
-                    {match.isEdited ? '已達評價上限' : match.latestReview ? '修改評價' : '留下評價'}
+                    <Star size={16} strokeWidth={2} className={!match.isEdited && match.opponent ? 'fill-yellow-400 text-black' : ''} />
+                    {match.isEdited ? '已達上限' : match.latestReview ? '修改評價' : '留下評價'}
                   </button>
                 </div>
               </div>

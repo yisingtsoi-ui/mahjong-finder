@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 export default function QRCodeModal({ user, onClose, onMatchStarted }) {
   const [tab, setTab] = useState('show'); // 'show' 或 'scan'
   const [loading, setLoading] = useState(false);
+  const [isClashing, setIsClashing] = useState(false);
 
   const handleScan = async (scannedData) => {
     if (!scannedData || loading) return;
@@ -68,8 +69,17 @@ export default function QRCodeModal({ user, onClose, onMatchStarted }) {
         play_until: playUntil.toISOString(),
       }).in('id', [user.id, scannedUserId]);
 
-      alert("成功確認到達！已進入牌局狀態，兩分鐘後將自動結束。");
-      onMatchStarted();
+      // 觸發碰撞動畫
+      setIsClashing(true);
+      if (window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate([200, 100, 200]); // 震動回饋
+      }
+      
+      setTimeout(() => {
+        alert("成功確認到達！已進入牌局狀態，兩分鐘後將自動結束。");
+        onMatchStarted();
+      }, 800);
+      
     } catch (error) {
       console.error('Error starting match:', error);
       const rawText = scannedData && scannedData[0] ? scannedData[0].rawValue : JSON.stringify(scannedData);
@@ -79,42 +89,50 @@ export default function QRCodeModal({ user, onClose, onMatchStarted }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
-        <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="text-lg font-bold">確認到達</h2>
-          <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100">
-            <X size={20} />
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
+      <div className={`bg-[#F5F4EE] border-4 border-black rounded-md w-full max-w-sm overflow-hidden shadow-brutal transition-transform ${isClashing ? 'animate-clash' : ''}`}>
+        <div className="flex justify-between items-center p-4 border-b-4 border-black bg-white">
+          <h2 className="text-xl font-black tracking-widest">確認到達</h2>
+          <button onClick={onClose} className="p-1 rounded-md hover:bg-gray-200 border-2 border-transparent hover:border-black transition-all">
+            <X size={24} strokeWidth={3} />
           </button>
         </div>
 
-        <div className="flex border-b">
+        <div className="flex border-b-4 border-black bg-white">
           <button 
-            className={`flex-1 py-3 font-medium flex items-center justify-center gap-2 ${tab === 'show' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
+            className={`flex-1 py-4 font-black tracking-widest flex items-center justify-center gap-2 ${tab === 'show' ? 'text-green-600 bg-green-50 border-b-4 border-green-600' : 'text-gray-500 hover:bg-gray-50'}`}
             onClick={() => setTab('show')}
           >
-            <QrCode size={18} /> 我的 QR Code
+            <QrCode size={20} /> 我的 QR
           </button>
           <button 
-            className={`flex-1 py-3 font-medium flex items-center justify-center gap-2 ${tab === 'scan' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
+            className={`flex-1 py-4 font-black tracking-widest flex items-center justify-center gap-2 ${tab === 'scan' ? 'text-green-600 bg-green-50 border-b-4 border-green-600' : 'text-gray-500 hover:bg-gray-50'}`}
             onClick={() => setTab('scan')}
           >
-            <ScanLine size={18} /> 掃描對方
+            <ScanLine size={20} /> 掃描對方
           </button>
         </div>
 
-        <div className="p-6 flex flex-col items-center justify-center min-h-[300px]">
+        <div className="p-8 flex flex-col items-center justify-center min-h-[300px]">
           {tab === 'show' ? (
             <div className="flex flex-col items-center text-center">
-              <div className="bg-white p-4 rounded-xl shadow-inner border">
+              <div className="bg-white p-4 rounded-md border-4 border-black shadow-brutal-sm">
                 <QRCodeSVG value={JSON.stringify({ userId: user.id })} size={200} />
               </div>
-              <p className="mt-4 text-sm text-gray-500">請讓已經到達的雀友掃描此 QR Code</p>
+              <p className="mt-6 text-sm font-bold tracking-widest text-gray-600">請讓已經到達的雀友掃描此 QR Code</p>
             </div>
           ) : (
-            <div className="w-full relative rounded-xl overflow-hidden bg-black aspect-square flex items-center justify-center">
-              {loading ? (
-                <div className="text-white">處理中...</div>
+            <div className="w-full relative rounded-md border-4 border-black overflow-hidden bg-black aspect-square flex items-center justify-center shadow-brutal-sm">
+              {isClashing ? (
+                <div className="text-green-400 font-black text-2xl animate-neon flex flex-col items-center gap-4">
+                  <div className="flex gap-2">
+                    <span className="text-5xl">🀄</span>
+                    <span className="text-5xl">🀄</span>
+                  </div>
+                  開局成功！
+                </div>
+              ) : loading ? (
+                <div className="text-white font-black tracking-widest animate-pulse">處理中...</div>
               ) : (
                 <Scanner 
                   onScan={handleScan} 

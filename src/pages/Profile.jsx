@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { Star, Zap, Handshake } from 'lucide-react'
+import MahjongLoading from '../components/MahjongLoading'
 
 export default function Profile() {
   const [loading, setLoading] = useState(false)
@@ -158,9 +159,8 @@ export default function Profile() {
 
   if (isInitializing) {
     return (
-      <div className="flex flex-col h-screen items-center justify-center bg-[#F5F4EE] space-y-4">
-        <span className="text-5xl animate-spin">🀄</span>
-        <span className="font-bold tracking-widest text-lg">理牌中...</span>
+      <div className="flex flex-col h-screen items-center justify-center bg-[#F5F4EE]">
+        <MahjongLoading text="理牌中..." />
       </div>
     )
   }
@@ -174,7 +174,7 @@ export default function Profile() {
         </button>
       </div>
 
-      <div className={`bg-white rounded-xl border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-6 mb-8 ${isTopPlayer ? 'bg-gradient-to-br from-yellow-100 to-yellow-300' : ''}`}>
+      <div className={`bg-white rounded-md border-2 border-black shadow-tile p-8 mb-8 relative ${isTopPlayer ? 'bg-gradient-to-br from-yellow-100 to-yellow-300' : ''}`}>
         <div className="flex flex-col items-center mb-6">
           <div className="w-24 h-24 bg-[#F5F4EE] border-4 border-black rounded-full flex items-center justify-center text-4xl mb-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             🀄
@@ -192,27 +192,27 @@ export default function Profile() {
           
           {/* 大分顯示 */}
           {stats.count > 0 && !editing && (
-            <div className="mt-3 bg-black text-white px-4 py-1 rounded-full border-2 border-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-              <span className="font-bold text-sm mr-2">大分</span>
+            <div className="mt-3 bg-black text-white px-4 py-1 rounded-sm border-2 border-black shadow-brutal-sm">
+              <span className="font-bold text-sm mr-2 tracking-widest">大分</span>
               <span className="font-black text-xl">{stats.overall}</span>
             </div>
           )}
           
           {editing ? (
              <textarea
-              className="text-black font-medium text-center border-4 border-black rounded-xl p-3 mt-4 w-full bg-white outline-none resize-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+              className="text-black font-medium text-center border-4 border-black rounded-md p-4 mt-4 w-full bg-white outline-none resize-none shadow-brutal-sm"
               value={profile.bio}
               onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
               placeholder="輸入簡介"
               rows="2"
             />
           ) : (
-            <p className="text-black font-medium mt-4 bg-white/50 px-4 py-2 rounded-lg border-2 border-black border-dashed">{profile.bio || '這人很懶，什麼都沒寫'}</p>
+            <p className="text-black font-bold mt-4 bg-white/50 px-4 py-3 rounded-md border-2 border-black border-dashed">{profile.bio || '這人很懶，什麼都沒寫'}</p>
           )}
 
           {/* 雀王格言區塊 */}
           {isTopPlayer && (
-            <div className="mt-6 w-full p-4 border-4 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transform -rotate-1">
+            <div className="mt-6 w-full p-5 border-4 border-black bg-white shadow-brutal transform -rotate-1">
               <div className="text-xs font-black tracking-widest bg-black text-white inline-block px-2 py-1 mb-2 absolute -top-3 -left-2 rotate-3">雀王格言</div>
               {editing && !profile.motto_set ? (
                 <div>
@@ -296,7 +296,7 @@ export default function Profile() {
       <button
         onClick={editing ? updateProfile : () => setEditing(true)}
         disabled={loading}
-        className={`w-full py-4 rounded-xl font-bold border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all mb-10 active:shadow-[0px_0px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 ${
+        className={`w-full py-4 rounded-md font-black tracking-widest border-2 border-black shadow-brutal transition-all mb-10 active:shadow-brutal-active ${
           editing
             ? 'bg-black text-white'
             : 'bg-white text-black hover:bg-gray-50'
@@ -306,7 +306,7 @@ export default function Profile() {
       </button>
 
       {/* Reviews Section */}
-      <div className="bg-white rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-6 mb-6">
+      <div className="bg-white rounded-md border-2 border-black shadow-tile p-8 mb-6">
         <h3 className="text-xl font-black mb-6 flex items-center gap-2 border-b-2 border-black pb-3">
           雀友評價 ({stats.count > 0 ? stats.count : reviews.length})
         </h3>
