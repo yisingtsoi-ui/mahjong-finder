@@ -67,25 +67,25 @@ export default function Leaderboard() {
                   <div className="absolute -bottom-4 -right-2 text-2xl animate-float" style={{ animationDelay: '1.5s' }}>🎲</div>
                   
                   <div className="relative bg-white border-4 border-black p-1 shadow-[8px_8px_0_0_#000]">
-                    <div className="border-4 border-dashed border-black p-4 bg-[#FACC15] relative overflow-hidden">
-                      <div className="absolute inset-0 bg-polka-dot opacity-20 pointer-events-none"></div>
+                    <div className="border-4 border-dashed border-black p-4 bg-gold-foil relative overflow-hidden">
+                      <div className="absolute inset-0 bg-polka-dot opacity-30 mix-blend-multiply pointer-events-none"></div>
                       
                       <div className="relative z-10 flex justify-between items-center">
                         <div className="flex-1">
-                          <div className="inline-block bg-black text-yellow-400 font-black text-xs px-2 py-1 mb-2 tracking-widest shadow-brutal-sm">
+                          <div className="inline-block bg-black text-yellow-300 font-black text-xs px-2 py-1 mb-2 tracking-widest shadow-brutal-sm border border-yellow-500/30">
                             {titles[r]}
                           </div>
-                          <h2 className="text-3xl font-black uppercase tracking-tight break-all">{leader.username}</h2>
+                          <h2 className="text-3xl font-black uppercase tracking-tight break-all text-black drop-shadow-md">{leader.username}</h2>
                           {leader.motto && (
-                            <p className="font-bold italic text-sm mt-2 border-l-4 border-black pl-2 bg-white/60">
+                            <p className="font-bold italic text-sm mt-2 border-l-4 border-black pl-2 bg-black/10 text-black">
                               "{leader.motto}"
                             </p>
                           )}
                         </div>
                         
                         <div className="text-right ml-4 flex flex-col items-end">
-                          <div className="absolute -top-8 -right-4 text-8xl font-black text-white" 
-                               style={{ textShadow: '4px 4px 0 #A855F7, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000' }}>
+                          <div className="absolute -top-8 -right-4 text-8xl font-black text-gold-foil" 
+                               style={{ filter: 'drop-shadow(4px 4px 0px #A855F7) drop-shadow(-2px -2px 0px #000) drop-shadow(2px -2px 0px #000) drop-shadow(-2px 2px 0px #000) drop-shadow(2px 2px 0px #000)' }}>
                             {r}
                           </div>
                           <div className="mt-16 bg-white border-2 border-black px-3 py-1 shadow-brutal-sm rounded-sm z-10">

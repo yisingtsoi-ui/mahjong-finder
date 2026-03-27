@@ -68,9 +68,7 @@ export default function UserProfileModal({ user, onClose }) {
             </h2>
             {userRank && userRank <= 100 && (
               <span className={`px-2 py-0.5 text-xs font-black border-2 border-black shadow-brutal-sm ${
-                userRank === 1 ? 'bg-yellow-400 text-black' :
-                userRank === 2 ? 'bg-yellow-400 text-black' :
-                userRank === 3 ? 'bg-yellow-400 text-black' :
+                userRank <= 3 ? 'bg-gold-foil text-black' :
                 userRank <= 20 ? 'bg-red-500 text-white' :
                 userRank <= 60 ? 'bg-indigo-900 text-white' :
                 'bg-gray-700 text-white'

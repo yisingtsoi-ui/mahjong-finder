@@ -185,9 +185,7 @@ export default function Profile() {
           </div>
           {userRank && userRank <= 100 && !editing && (
             <div className={`px-3 py-1 text-sm font-black border-2 border-black shadow-brutal-sm mb-2 ${
-              userRank === 1 ? 'bg-yellow-400 text-black' :
-              userRank === 2 ? 'bg-yellow-400 text-black' :
-              userRank === 3 ? 'bg-yellow-400 text-black' :
+              userRank <= 3 ? 'bg-gold-foil text-black' :
               userRank <= 20 ? 'bg-red-500 text-white' :
               userRank <= 60 ? 'bg-indigo-900 text-white' :
               'bg-gray-700 text-white'
