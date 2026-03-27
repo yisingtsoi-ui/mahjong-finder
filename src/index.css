@@ -69,11 +69,74 @@
 
 /* Leaderboard Patterns & Animations */
 .bg-gold-foil {
-  background: linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
-  background-size: 300% 300%;
-  animation: shimmer 5s ease infinite;
-  box-shadow: inset 0 0 20px rgba(0,0,0,0.3), inset 0 0 5px rgba(255,255,255,0.8);
+  background: linear-gradient(135deg, #A67C00 0%, #BF953F 25%, #FCF6BA 50%, #B38728 75%, #FBF5B7 100%);
+  background-size: 200% 200%;
+  animation: shimmer 5s ease-in-out infinite;
+  box-shadow: inset 0px 4px 8px rgba(0,0,0,0.5), inset 0px -4px 8px rgba(255,255,255,0.4);
+  transition: all 0.3s ease;
 }
+.bg-gold-foil:hover { animation-duration: 1.5s; }
+
+.bg-gold-foil-light {
+  background: linear-gradient(135deg, #FDE68A 0%, #FEF08A 25%, #FFFBEB 50%, #FDE047 75%, #FEF9C3 100%);
+  background-size: 200% 200%;
+  animation: shimmer 8s ease-in-out infinite;
+  box-shadow: inset 0px 4px 12px rgba(0,0,0,0.1), inset 0px -4px 12px rgba(255,255,255,0.8);
+}
+
+.bg-red-foil {
+  background: linear-gradient(135deg, #7F1D1D 0%, #DC2626 25%, #FCA5A5 50%, #991B1B 75%, #FECACA 100%);
+  background-size: 200% 200%;
+  animation: shimmer 8s ease-in-out infinite;
+  box-shadow: inset 0px 4px 8px rgba(0,0,0,0.6), inset 0px -4px 8px rgba(255,255,255,0.3);
+  transition: all 0.3s ease;
+}
+.bg-red-foil:hover { animation-duration: 2s; }
+
+.bg-orange-foil {
+  background: linear-gradient(135deg, #7C2D12 0%, #EA580C 25%, #FDBA74 50%, #C2410C 75%, #FFEDD5 100%);
+  background-size: 200% 200%;
+  animation: shimmer 8s ease-in-out infinite;
+  box-shadow: inset 0px 4px 8px rgba(0,0,0,0.6), inset 0px -4px 8px rgba(255,255,255,0.3);
+  transition: all 0.3s ease;
+}
+.bg-orange-foil:hover { animation-duration: 2s; }
+
+.bg-blue-foil {
+  background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 25%, #93C5FD 50%, #1E40AF 75%, #BFDBFE 100%);
+  background-size: 200% 200%;
+  animation: shimmer 9s ease-in-out infinite;
+  box-shadow: inset 0px 3px 6px rgba(0,0,0,0.7), inset 0px -3px 6px rgba(255,255,255,0.2);
+  transition: all 0.3s ease;
+}
+.bg-blue-foil:hover { animation-duration: 2.5s; }
+
+.bg-green-foil {
+  background: linear-gradient(135deg, #064E3B 0%, #059669 25%, #6EE7B7 50%, #047857 75%, #A7F3D0 100%);
+  background-size: 200% 200%;
+  animation: shimmer 9s ease-in-out infinite;
+  box-shadow: inset 0px 3px 6px rgba(0,0,0,0.7), inset 0px -3px 6px rgba(255,255,255,0.2);
+  transition: all 0.3s ease;
+}
+.bg-green-foil:hover { animation-duration: 2.5s; }
+
+.bg-gray-foil {
+  background: linear-gradient(135deg, #374151 0%, #6B7280 25%, #D1D5DB 50%, #4B5563 75%, #E5E7EB 100%);
+  background-size: 200% 200%;
+  animation: shimmer 10s ease-in-out infinite;
+  box-shadow: inset 0px 2px 4px rgba(0,0,0,0.6), inset 0px -2px 4px rgba(255,255,255,0.3);
+  transition: all 0.3s ease;
+}
+.bg-gray-foil:hover { animation-duration: 3s; }
+
+.bg-teal-foil {
+  background: linear-gradient(135deg, #134E4A 0%, #0D9488 25%, #5EEAD4 50%, #0F766E 75%, #99F6E4 100%);
+  background-size: 200% 200%;
+  animation: shimmer 10s ease-in-out infinite;
+  box-shadow: inset 0px 2px 4px rgba(0,0,0,0.6), inset 0px -2px 4px rgba(255,255,255,0.3);
+  transition: all 0.3s ease;
+}
+.bg-teal-foil:hover { animation-duration: 3s; }
 
 @keyframes shimmer {
   0% { background-position: 0% 50%; }
@@ -82,11 +145,26 @@
 }
 
 .text-gold-foil {
-  background: linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
+  background: linear-gradient(135deg, #A67C00 0%, #BF953F 25%, #FCF6BA 50%, #B38728 75%, #FBF5B7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% 200%;
+  animation: shimmer 5s ease-in-out infinite;
+}
+
+.bg-orange-foil {
+  background: linear-gradient(135deg, #7C2D12 0%, #EA580C 25%, #FDBA74 50%, #C2410C 75%, #FFEDD5 100%);
+  background-size: 300% 300%;
+  animation: shimmer 6s ease infinite;
+  box-shadow: inset 0px 4px 8px rgba(0,0,0,0.6), inset 0px -4px 8px rgba(255,255,255,0.3);
+}
+
+.text-orange-foil {
+  background: linear-gradient(135deg, #7C2D12 0%, #EA580C 25%, #FDBA74 50%, #C2410C 75%, #FFEDD5 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-size: 300% 300%;
-  animation: shimmer 5s ease infinite;
+  animation: shimmer 6s ease infinite;
   text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
 }
 
