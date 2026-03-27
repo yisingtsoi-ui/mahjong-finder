@@ -42,7 +42,7 @@ export default function Login() {
       <div className="text-center mb-10">
         <div className="flex justify-center mb-4">
           <div className="w-20 h-20 bg-white border-4 border-black rounded-2xl flex items-center justify-center shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] rotate-3">
-            <span className="text-5xl font-black">發</span>
+            <span className="text-5xl font-black text-green-600">發</span>
           </div>
         </div>
         <h1 className="text-4xl font-black tracking-widest uppercase mt-4 mb-2">Mahjong Finder</h1>

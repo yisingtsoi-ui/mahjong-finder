@@ -84,7 +84,7 @@ export default function UserProfileModal({ user, onClose }) {
                 <div className="w-[2px] h-8 bg-black"></div>
                 <div className="flex-1 text-center">
                   <div className="flex justify-center mb-1">
-                    <span className="font-black text-lg leading-none" style={{height: '20px'}}>中</span>
+                    <span className="font-black text-lg leading-none text-red-600" style={{height: '20px'}}>中</span>
                   </div>
                   <div className="text-xs font-bold tracking-wider">牌技<br/>{user.skill_rating || '-'}</div>
                 </div>
@@ -147,7 +147,7 @@ export default function UserProfileModal({ user, onClose }) {
                         
                         <div className="flex gap-4 mb-2 text-xs font-bold bg-[#F5F4EE] p-2 rounded border border-black">
                           <div className="flex items-center gap-1"><Zap size={14}/> {review.speed_rating}</div>
-                          <div className="flex items-center gap-1"><span className="font-black text-[12px] leading-none">中</span> {review.skill_rating}</div>
+                          <div className="flex items-center gap-1"><span className="font-black text-[12px] leading-none text-red-600">中</span> {review.skill_rating}</div>
                           <div className="flex items-center gap-1"><Handshake size={14}/> {review.manner_rating}</div>
                         </div>
 

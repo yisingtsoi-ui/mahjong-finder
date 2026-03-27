@@ -59,16 +59,16 @@ export default function QRCodeModal({ user, onClose, onMatchStarted }) {
 
       if (playersError) throw playersError;
 
-      // 3. 更新雙方狀態為「牌局中」，時間設為 2 小時後
+      // 3. 更新雙方狀態為「牌局中」，時間設為 2 分鐘後
       const playUntil = new Date();
-      playUntil.setHours(playUntil.getHours() + 2);
+      playUntil.setMinutes(playUntil.getMinutes() + 2);
 
       await supabase.from('profiles').update({
         play_status: 'playing',
         play_until: playUntil.toISOString(),
       }).in('id', [user.id, scannedUserId]);
 
-      alert("成功確認到達！已進入牌局狀態，兩小時後將自動結束。");
+      alert("成功確認到達！已進入牌局狀態，兩分鐘後將自動結束。");
       onMatchStarted();
     } catch (error) {
       console.error('Error starting match:', error);

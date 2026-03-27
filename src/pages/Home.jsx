@@ -306,7 +306,7 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-[#F5F4EE] pb-24 px-4 pt-6 font-sans text-gray-900">
       <div className="flex items-center justify-center mb-8 border-b-2 border-black pb-4">
         <div className="border-2 border-black rounded p-1 mr-3 bg-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-          <span className="font-black text-xl leading-none block">發</span>
+          <span className="font-black text-xl leading-none block text-green-600">發</span>
         </div>
         <h1 className="text-2xl font-black tracking-widest">MAHJONG FINDER</h1>
       </div>
@@ -314,7 +314,7 @@ export default function Home() {
       {playStatus === 'playing' ? (
         <div className="w-full bg-white p-6 rounded-xl border-2 border-black flex flex-col items-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           <div className="w-16 h-16 border-2 border-black bg-[#F5F4EE] rounded-full flex items-center justify-center mb-4">
-            <span className="text-3xl font-black">中</span>
+            <span className="text-3xl font-black text-red-600">中</span>
           </div>
           <h2 className="text-xl font-bold mb-2">牌局進行中</h2>
           <p className="text-sm text-center font-medium">您目前正在牌局中，地圖已將您隱藏。<br/>牌局結束後，系統會通知您為雀友留下評價。</p>
@@ -394,7 +394,7 @@ export default function Home() {
                         <div className="w-[2px] h-8 bg-black"></div>
                         <div className="flex-1 text-center">
                           <div className="flex justify-center mb-1">
-                            <span className="font-black text-lg leading-none" style={{height: '20px'}}>中</span>
+                            <span className="font-black text-lg leading-none text-red-600" style={{height: '20px'}}>中</span>
                           </div>
                           <div className="text-[10px] font-bold tracking-wider">牌技: {u.skill_rating || '-'}</div>
                         </div>

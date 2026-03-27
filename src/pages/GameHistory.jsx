@@ -102,13 +102,13 @@ export default function GameHistory() {
         };
       });
 
-      // 過濾掉還在進行中的牌局 (建立時間在 2 小時內)
+      // 過濾掉還在進行中的牌局 (建立時間在 2 分鐘內)
       // 因為用戶要求：「當用戶的狀態脫離了對局中後，系統就要在“歷史牌局”中顯示出記錄」
       const now = new Date();
       historyData = historyData.filter(match => {
         const matchTime = new Date(match.created_at);
-        const hoursDiff = (now - matchTime) / (1000 * 60 * 60);
-        return hoursDiff >= 2; // 超過兩小時才算歷史牌局
+        const minutesDiff = (now - matchTime) / (1000 * 60);
+        return minutesDiff >= 2; // 超過兩分鐘才算歷史牌局
       });
 
       // 依時間排序 (最新的在最上面)

@@ -321,7 +321,7 @@ export default function Profile() {
             <div className="w-[2px] h-12 bg-black"></div>
             <div className="flex-1 text-center">
               <div className="flex justify-center mb-2">
-                <span className="font-black text-2xl leading-none" style={{height: '24px'}}>中</span>
+                <span className="font-black text-2xl leading-none text-red-600" style={{height: '24px'}}>中</span>
               </div>
               <div className="text-xs font-bold tracking-widest mb-1">牌技</div>
               <div className="text-xl font-black">{stats.skill}</div>
@@ -348,15 +348,17 @@ export default function Profile() {
                   </div>
                 </div>
                 
-                <div className="flex gap-4 mb-3">
-                  <div className="flex items-center gap-1 font-bold text-sm">
-                    <Zap size={14} /> <span>{review.speed_rating || '-'}</span>
+                <div className="flex gap-4 mb-2 border-2 border-black rounded-lg p-2 bg-[#F5F4EE] justify-center">
+                  <div className="flex items-center gap-1 font-bold">
+                    <Zap size={14} className="text-black" /> <span>{review.speed_rating || '-'}</span>
                   </div>
-                  <div className="flex items-center gap-1 font-bold text-sm">
-                    <span className="font-black leading-none text-[14px]">中</span> <span>{review.skill_rating || '-'}</span>
+                  <div className="w-[2px] bg-black opacity-20"></div>
+                  <div className="flex items-center gap-1 font-bold">
+                    <span className="font-black leading-none text-[14px] text-red-600">中</span> <span>{review.skill_rating || '-'}</span>
                   </div>
-                  <div className="flex items-center gap-1 font-bold text-sm">
-                    <Handshake size={14} /> <span>{review.manner_rating || '-'}</span>
+                  <div className="w-[2px] bg-black opacity-20"></div>
+                  <div className="flex items-center gap-1 font-bold">
+                    <Handshake size={14} className="text-black" /> <span>{review.manner_rating || '-'}</span>
                   </div>
                 </div>
 
