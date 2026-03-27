@@ -76,6 +76,15 @@ export default function GameHistory() {
 
       if (reviewsError) throw reviewsError;
 
+      // 4. 獲取用戶目前的狀態，判斷是否還在牌局中
+      const { data: userData } = await supabase
+        .from('profiles')
+        .select('play_status, play_until')
+        .eq('id', userId)
+        .single();
+      
+      const isCurrentlyPlaying = userData?.play_status === 'playing' && userData?.play_until && new Date() < new Date(userData.play_until);
+
       // 組合數據
       let historyData = myMatches.map(m => {
         const matchOpponents = opponents.filter(o => o.match_id === m.match_id);
@@ -102,17 +111,15 @@ export default function GameHistory() {
         };
       });
 
-      // 過濾掉還在進行中的牌局 (建立時間在 2 分鐘內)
-      // 因為用戶要求：「當用戶的狀態脫離了對局中後，系統就要在“歷史牌局”中顯示出記錄」
-      const now = new Date();
-      historyData = historyData.filter(match => {
-        const matchTime = new Date(match.created_at);
-        const minutesDiff = (now - matchTime) / (1000 * 60);
-        return minutesDiff >= 2; // 超過兩分鐘才算歷史牌局
-      });
-
       // 依時間排序 (最新的在最上面)
       historyData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      // 過濾掉還在進行中的牌局
+      // 因為用戶要求：「當用戶的狀態脫離了對局中後，系統就要在“歷史牌局”中顯示出記錄」
+      // 如果用戶正在對局中，最新的那筆牌局就是當前牌局，不應該顯示在歷史中
+      if (isCurrentlyPlaying && historyData.length > 0) {
+        historyData.shift(); // 移除最新的一筆 (當前進行中的牌局)
+      }
 
       setMatches(historyData);
     } catch (err) {
