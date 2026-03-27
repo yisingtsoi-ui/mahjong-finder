@@ -61,11 +61,25 @@ export default function GameHistory() {
       // 2. 獲取這些牌局中的對手玩家
       const { data: opponents, error: opponentsError } = await supabase
         .from('match_players')
-        .select('match_id, user_id, profiles(id, username)')
+        .select('match_id, user_id')
         .in('match_id', matchIds)
         .neq('user_id', userId);
 
       if (opponentsError) throw opponentsError;
+
+      // 2.5 獲取對手玩家的 profile
+      let opponentProfiles = [];
+      if (opponents && opponents.length > 0) {
+        const opponentIds = opponents.map(o => o.user_id);
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, username')
+          .in('id', opponentIds);
+          
+        if (!profilesError && profilesData) {
+          opponentProfiles = profilesData;
+        }
+      }
 
       // 3. 獲取我對這些牌局的評價記錄
       const { data: myReviews, error: reviewsError } = await supabase
@@ -88,7 +102,11 @@ export default function GameHistory() {
       // 組合數據
       let historyData = myMatches.map(m => {
         const matchOpponents = opponents.filter(o => o.match_id === m.match_id);
-        const opponent = matchOpponents.length > 0 ? matchOpponents[0].profiles : null;
+        let opponent = null;
+        if (matchOpponents.length > 0) {
+          const oppId = matchOpponents[0].user_id;
+          opponent = opponentProfiles.find(p => p.id === oppId) || { id: oppId, username: '神秘雀友' };
+        }
         
         // 取得對應的牌局詳細資訊
         const details = matchDetails?.find(d => d.id === m.match_id);
