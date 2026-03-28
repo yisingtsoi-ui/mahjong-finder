@@ -281,6 +281,14 @@ export default function Home() {
               longitude = capPos.coords.longitude;
             } catch (posErr) {
               console.warn('Failed to get real position from both Web and Capacitor, trying IP fallback:', posErr)
+              // 如果明確是權限被拒絕，直接拋出錯誤並提示使用者
+              if (posErr.message && (posErr.message.includes('denied') || posErr.message.includes('Permission'))) {
+                 throw new Error('定位權限已被拒絕。請至設備設定中開啟 Mahjong Finder 的定位權限，否則無法尋找附近雀友。');
+              }
+              if (webErr && webErr.code === 1) { // 1 is PERMISSION_DENIED in GeolocationPositionError
+                 throw new Error('定位權限已被拒絕。請至瀏覽器或設備設定中開啟定位權限，否則無法尋找附近雀友。');
+              }
+              
               try {
                 // 使用 IP 定位作為桌面版/無權限時的動態 Fallback，避免寫死單一城市
                 const ipRes = await fetch('https://get.geojs.io/v1/ip/geo.json');

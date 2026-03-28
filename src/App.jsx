@@ -5,6 +5,7 @@ import Home from './pages/Home'
 import Profile from './pages/Profile'
 import Login from './pages/Login'
 import Leaderboard from './pages/Leaderboard'
+import PrivacyPolicy from './pages/PrivacyPolicy'
 import GameHistory from './pages/GameHistory'
 import { supabase } from './lib/supabase'
 import { Toaster, toast } from 'react-hot-toast'
@@ -146,6 +147,8 @@ function App() {
           path="/leaderboard"
           element={session ? <Leaderboard /> : <Navigate to="/login" />}
         />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
       {session && <Navbar />}
     </BrowserRouter>

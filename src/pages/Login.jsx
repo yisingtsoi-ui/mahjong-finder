@@ -19,6 +19,9 @@ export default function Login() {
         const { error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/`,
+          }
         })
         if (error) throw error
         setMessage('註冊成功！請檢查您的電子郵件進行驗證。')

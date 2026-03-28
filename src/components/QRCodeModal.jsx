@@ -252,7 +252,9 @@ export default function QRCodeModal({ user, onClose, onMatchStarted }) {
                     onError={(error) => {
                       console.error('Scanner error:', error);
                       if (error?.message?.includes('Permission') || error?.name === 'NotAllowedError') {
-                        window.customAlert('無法開啟相機，請確保您已允許瀏覽器或應用程式使用相機權限！');
+                        window.customAlert('無法開啟相機，請確保您已至手機設定中允許 Mahjong Finder 使用相機權限！');
+                      } else {
+                        window.customAlert('相機啟動失敗，請重新整理頁面或檢查權限設定。');
                       }
                     }}
                     components={{ audio: false, finder: false }}

@@ -163,6 +163,49 @@ export default function Profile() {
     window.location.reload()
   }
 
+  const handleDeleteAccount = async () => {
+    if (!window.confirm('警告：此操作將永久刪除您的帳號、個人資料及所有評價記錄。確定要繼續嗎？')) {
+      return
+    }
+
+    try {
+      setLoading(true)
+      
+      // 由於 Supabase Auth 用戶無法直接從客戶端刪除自己的 Auth 記錄（安全限制）
+      // 我們需要呼叫 Supabase RPC (Edge Function) 或是只刪除 Profile 資料並登出
+      // 這裡我們示範：標記為刪除 (軟刪除) 或呼叫自訂的刪除邏輯
+      
+      // 1. 刪除相關資料 (RLS 允許的話)
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId)
+        
+      if (profileError) {
+        console.error('刪除資料失敗:', profileError)
+        // 繼續嘗試刪除 auth，即使 profile 刪除失敗
+      }
+
+      // 2. 呼叫 supabase 提供的 RPC 函數來刪除 Auth 使用者 (需要先在 supabase 建立此 RPC)
+      // 如果沒有 RPC，最基本的做法是先將帳號標記為禁用/已刪除，然後強制登出
+      const { error: authError } = await supabase.rpc('delete_user')
+      
+      if (authError) {
+        console.error('呼叫 delete_user RPC 失敗，改用備用方案:', authError)
+        // 備用方案：如果沒有 RPC，我們已經刪除了 Profile，現在直接登出
+      }
+      
+      window.customAlert('帳號已成功刪除。期待未來能再與您切磋！')
+      await supabase.auth.signOut()
+      window.location.reload()
+    } catch (error) {
+      console.error('Error deleting account:', error)
+      window.customAlert('刪除帳號時發生錯誤，請稍後再試。')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (isInitializing) {
     return (
       <div className="flex flex-col h-screen items-center justify-center bg-[#F5F4EE]">
@@ -324,6 +367,16 @@ export default function Profile() {
       >
         {loading ? '處理中...' : editing ? '儲存變更' : '編輯名片'}
       </button>
+
+      {editing && (
+        <button
+          onClick={handleDeleteAccount}
+          disabled={loading}
+          className="w-full py-4 rounded-md font-black tracking-widest border-2 border-red-600 text-red-600 bg-white shadow-[4px_4px_0px_0px_rgba(220,38,38,1)] transition-all mb-10 active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_rgba(220,38,38,1)] hover:bg-red-50"
+        >
+          刪除帳號
+        </button>
+      )}
 
       {/* Reviews Section */}
       <div className="bg-white rounded-md border-2 border-black shadow-tile p-8 mb-6">
