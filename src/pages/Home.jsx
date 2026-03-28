@@ -23,14 +23,26 @@ export default function Home() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('is_online, latitude, longitude, play_status, play_until')
+        .select('is_online, latitude, longitude, play_status, play_until, last_seen')
         .eq('id', currentUserId)
         .single()
         
       if (error) throw error
       
       if (data) {
-        setIsOnline(data.is_online)
+        let currentIsOnline = data.is_online;
+        
+        // 檢查是否超過 4 小時未更新狀態，若是則強制下線
+        if (currentIsOnline && data.last_seen) {
+          const lastSeenDate = new Date(data.last_seen);
+          const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
+          if (lastSeenDate < fourHoursAgo) {
+            currentIsOnline = false;
+            await supabase.from('profiles').update({ is_online: false }).eq('id', currentUserId);
+          }
+        }
+        
+        setIsOnline(currentIsOnline)
         
         // 檢查是否還在牌局中
         if (data.play_status === 'playing' && data.play_until) {
@@ -65,7 +77,7 @@ export default function Home() {
           setPlayStatus('none')
         }
 
-        if (data.is_online && data.latitude && data.longitude && data.play_status !== 'playing') {
+        if (currentIsOnline && data.latitude && data.longitude && data.play_status !== 'playing') {
           fetchNearbyUsers(data.latitude, data.longitude, currentUserId)
         } else {
           setLoading(false) // 如果沒上線，就結束 loading 狀態
@@ -81,12 +93,15 @@ export default function Home() {
     try {
       let users = [];
       
-      // 直接取得所有在線且非遊玩中的玩家
+      const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+      
+      // 直接取得所有在線且非遊玩中的玩家，並且 last_seen 在 4 小時內
       const { data: profiles, error: profileErr } = await supabase
         .from('profiles')
-        .select('id, username, latitude, longitude, contact_info, play_status, is_online')
+        .select('id, username, latitude, longitude, contact_info, play_status, is_online, last_seen')
         .eq('is_online', true)
-        .neq('play_status', 'playing');
+        .neq('play_status', 'playing')
+        .gte('last_seen', fourHoursAgo);
 
       if (!profileErr && profiles) {
         const calcDist = (lat1, lon1, lat2, lon2) => {
