@@ -124,7 +124,7 @@ export default function QRCodeModal({ user, onClose, onMatchStarted }) {
             className={`flex-1 py-4 font-black tracking-widest flex items-center justify-center gap-2 ${tab === 'show' ? 'text-green-600 bg-green-50 border-b-4 border-green-600' : 'text-gray-500 hover:bg-gray-50'}`}
             onClick={() => setTab('show')}
           >
-            <QrCode size={20} /> 我的 QR
+            <QrIcon size={20} /> 我的 QR
           </button>
           <button 
             className={`flex-1 py-4 font-black tracking-widest flex items-center justify-center gap-2 ${tab === 'scan' ? 'text-green-600 bg-green-50 border-b-4 border-green-600' : 'text-gray-500 hover:bg-gray-50'}`}
