@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import { X, QrCode as QrIcon, ScanLine } from 'lucide-react';
@@ -9,6 +9,52 @@ export default function QRCodeModal({ user, onClose, onMatchStarted }) {
   const [tab, setTab] = useState('show'); // 'show' 或 'scan'
   const [loading, setLoading] = useState(false);
   const [isClashing, setIsClashing] = useState(false);
+  const [cameraReady, setCameraReady] = useState(false);
+  const scannerContainerRef = useRef(null);
+
+  // 監聽相機載入狀態並隱藏 Android WebView 預設的播放按鈕
+  useEffect(() => {
+    if (tab !== 'scan' || loading) {
+      setCameraReady(false);
+      return;
+    }
+
+    const handlePlaying = () => setCameraReady(true);
+
+    const patchVideo = (video) => {
+      if (!video || video.dataset.patched) return;
+      video.dataset.patched = 'true';
+      // 設置透明 poster 以覆蓋 Android WebView 預設的播放按鈕
+      video.setAttribute('poster', 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
+      video.addEventListener('playing', handlePlaying);
+      if (!video.paused && video.readyState > 2) {
+        setCameraReady(true);
+      }
+    };
+
+    const observer = new MutationObserver(() => {
+      if (scannerContainerRef.current) {
+        patchVideo(scannerContainerRef.current.querySelector('video'));
+      }
+    });
+
+    if (scannerContainerRef.current) {
+      observer.observe(scannerContainerRef.current, { childList: true, subtree: true });
+      patchVideo(scannerContainerRef.current.querySelector('video'));
+    }
+
+    return () => {
+      observer.disconnect();
+      if (scannerContainerRef.current) {
+        const video = scannerContainerRef.current.querySelector('video');
+        if (video) {
+          video.removeEventListener('playing', handlePlaying);
+          // 清除 patched 標記，以便下次重新綁定
+          delete video.dataset.patched;
+        }
+      }
+    };
+  }, [tab, loading]);
 
   // 監聽自己的狀態變化，如果被別人掃描並進入「playing」狀態，也觸發動畫和成功提示
   useEffect(() => {
@@ -190,21 +236,29 @@ export default function QRCodeModal({ user, onClose, onMatchStarted }) {
               <p className="mt-6 text-sm font-bold tracking-widest text-gray-600">請讓已經到達的雀友掃描此 QR Code</p>
             </div>
           ) : (
-            <div className="w-full relative rounded-md border-4 border-black overflow-hidden bg-black aspect-square flex items-center justify-center shadow-brutal-sm">
+            <div ref={scannerContainerRef} className="w-full relative rounded-md border-4 border-black overflow-hidden bg-black aspect-square flex items-center justify-center shadow-brutal-sm">
               {loading ? (
                 <div className="text-white font-black tracking-widest animate-pulse">處理中...</div>
               ) : (
-                <Scanner 
-                  onScan={handleScan} 
-                  onError={(error) => {
-                    console.error('Scanner error:', error);
-                    if (error?.message?.includes('Permission') || error?.name === 'NotAllowedError') {
-                      window.customAlert('無法開啟相機，請確保您已允許瀏覽器或應用程式使用相機權限！');
-                    }
-                  }}
-                  components={{ audio: false, finder: false }}
-                  allowMultiple={true}
-                />
+                <>
+                  {!cameraReady && (
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black">
+                      <div className="animate-spin text-5xl mb-4">🀄</div>
+                      <div className="text-white font-black tracking-widest animate-pulse">相機啟動中...</div>
+                    </div>
+                  )}
+                  <Scanner 
+                    onScan={handleScan} 
+                    onError={(error) => {
+                      console.error('Scanner error:', error);
+                      if (error?.message?.includes('Permission') || error?.name === 'NotAllowedError') {
+                        window.customAlert('無法開啟相機，請確保您已允許瀏覽器或應用程式使用相機權限！');
+                      }
+                    }}
+                    components={{ audio: false, finder: false }}
+                    allowMultiple={true}
+                  />
+                </>
               )}
             </div>
           )}
