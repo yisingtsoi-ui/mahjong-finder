@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import Navbar from './components/Navbar'
 import Home from './pages/Home'
@@ -46,6 +46,13 @@ const GlobalAlert = () => {
       </div>
     </div>
   );
+};
+
+const NavigationBar = ({ session }) => {
+  const location = useLocation();
+  if (!session) return null;
+  if (location.pathname === '/privacy') return null;
+  return <Navbar />;
 };
 
 function App() {
@@ -150,7 +157,7 @@ function App() {
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
-      {session && <Navbar />}
+      <NavigationBar session={session} />
     </BrowserRouter>
   )
 }
