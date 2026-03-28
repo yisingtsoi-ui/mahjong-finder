@@ -178,7 +178,7 @@ export default function Profile() {
         </button>
       </div>
 
-      <div className={`bg-white rounded-md border-2 border-black shadow-tile p-8 mb-8 relative ${userRank && userRank <= 3 ? 'bg-gradient-to-br from-yellow-100 to-yellow-300' : ''}`}>
+      <div className={`bg-white rounded-md border-2 border-black shadow-tile p-8 mb-8 relative ${userRank && userRank <= 3 ? 'bg-gold-foil-light' : ''}`}>
         <div className="flex flex-col items-center mb-6">
           <div className="w-24 h-24 bg-[#F5F4EE] border-4 border-black rounded-full flex items-center justify-center text-4xl mb-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             🀄
@@ -186,10 +186,10 @@ export default function Profile() {
           {userRank && userRank <= 100 && !editing && (
             <div className={`px-3 py-1 text-sm font-black border-2 border-black shadow-brutal-sm mb-2 ${
               userRank <= 3 ? 'bg-gold-foil text-black' :
-              userRank <= 20 ? 'bg-red-500 text-white' :
-              userRank <= 60 ? 'bg-indigo-900 text-white' :
-              'bg-gray-700 text-white'
-            }`}>
+              userRank <= 20 ? 'bg-red-foil text-white' :
+              userRank <= 60 ? 'bg-blue-foil text-white' :
+              'bg-gray-foil text-white'
+            }`} style={userRank > 3 ? { filter: 'drop-shadow(1px 1px 0px #000)' } : {}}>
               {userRank === 1 ? '雀神' : 
                userRank === 2 ? '雀聖' : 
                userRank === 3 ? '雀王' : 
