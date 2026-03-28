@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import { X, QrCode as QrIcon, ScanLine } from 'lucide-react';
@@ -9,6 +9,43 @@ export default function QRCodeModal({ user, onClose, onMatchStarted }) {
   const [tab, setTab] = useState('show'); // 'show' 或 'scan'
   const [loading, setLoading] = useState(false);
   const [isClashing, setIsClashing] = useState(false);
+
+  // 監聽自己的狀態變化，如果被別人掃描並進入「playing」狀態，也觸發動畫和成功提示
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel(`public:profiles:id=eq.${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${user.id}`
+        },
+        (payload) => {
+          if (payload.new.play_status === 'playing' && payload.old.play_status !== 'playing') {
+            // 被別人掃描並開局成功！
+            setIsClashing(true);
+            if (window.navigator && window.navigator.vibrate) {
+              window.navigator.vibrate([200, 100, 200]); // 震動回饋
+            }
+            
+            setTimeout(() => {
+              window.customAlert("成功確認到達！已進入牌局狀態，兩分鐘後將自動結束。", '系統提示', () => {
+                onMatchStarted();
+              });
+            }, 800);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, onMatchStarted]);
 
   const handleScan = async (scannedData) => {
     if (!scannedData || loading) return;
@@ -135,7 +172,17 @@ export default function QRCodeModal({ user, onClose, onMatchStarted }) {
         </div>
 
         <div className="p-8 flex flex-col items-center justify-center min-h-[300px]">
-          {tab === 'show' ? (
+          {isClashing ? (
+            <div className="w-full relative rounded-md border-4 border-black overflow-hidden bg-black aspect-square flex items-center justify-center shadow-brutal-sm">
+              <div className="text-green-400 font-black text-2xl animate-neon flex flex-col items-center gap-4">
+                <div className="flex gap-2">
+                  <span className="text-5xl">🀄</span>
+                  <span className="text-5xl">🀄</span>
+                </div>
+                開局成功！
+              </div>
+            </div>
+          ) : tab === 'show' ? (
             <div className="flex flex-col items-center text-center">
               <div className="bg-white p-4 rounded-md border-4 border-black shadow-brutal-sm">
                 <QRCodeSVG value={JSON.stringify({ userId: user.id })} size={200} />
@@ -144,15 +191,7 @@ export default function QRCodeModal({ user, onClose, onMatchStarted }) {
             </div>
           ) : (
             <div className="w-full relative rounded-md border-4 border-black overflow-hidden bg-black aspect-square flex items-center justify-center shadow-brutal-sm">
-              {isClashing ? (
-                <div className="text-green-400 font-black text-2xl animate-neon flex flex-col items-center gap-4">
-                  <div className="flex gap-2">
-                    <span className="text-5xl">🀄</span>
-                    <span className="text-5xl">🀄</span>
-                  </div>
-                  開局成功！
-                </div>
-              ) : loading ? (
+              {loading ? (
                 <div className="text-white font-black tracking-widest animate-pulse">處理中...</div>
               ) : (
                 <Scanner 
