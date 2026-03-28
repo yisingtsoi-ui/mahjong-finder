@@ -114,8 +114,8 @@ export default function QRCodeModal({ user, onClose, onMatchStarted }) {
           await LocalNotifications.schedule({
             notifications: [
               {
-                title: "牌局已結束",
-                body: "別忘了到「歷史牌局」為剛才的雀友留下評價喔！",
+                title: "已退出對局狀態",
+                body: "別忘了到歷史對局為雀友留下評價哦！",
                 id: Math.floor(Date.now() / 1000), // id must be integer
                 schedule: { at: playUntil },
               }

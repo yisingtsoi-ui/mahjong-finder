@@ -48,13 +48,13 @@ export default function Home() {
             if ('Notification' in window) {
               Notification.requestPermission().then(permission => {
                 if (permission === 'granted') {
-                  new Notification('牌局已結束', { body: '別忘了到「歷史牌局」為剛才的雀友留下評價喔！' });
+                  new Notification('已退出對局狀態', { body: '別忘了到歷史對局為雀友留下評價哦！' });
                 } else {
-                  window.customAlert('牌局已結束！別忘了到「歷史牌局」為剛才的雀友留下評價喔！');
+                  window.customAlert('已退出對局狀態！別忘了到歷史對局為雀友留下評價哦！');
                 }
               });
             } else {
-              window.customAlert('牌局已結束！別忘了到「歷史牌局」為剛才的雀友留下評價喔！');
+              window.customAlert('已退出對局狀態！別忘了到歷史對局為雀友留下評價哦！');
             }
           } else {
             // 還在牌局中
@@ -193,8 +193,8 @@ export default function Home() {
                     if (perm.display === 'granted') {
                       LocalNotifications.schedule({
                         notifications: [{
-                          title: "牌局已結束",
-                          body: "別忘了到「歷史牌局」為剛才的雀友留下評價喔！",
+                          title: "已退出對局狀態",
+                          body: "別忘了到歷史對局為雀友留下評價哦！",
                           id: Math.floor(Date.now() / 1000),
                           schedule: { at: untilDate },
                         }]
@@ -208,30 +208,6 @@ export default function Home() {
             }
             // 重新抓取最新狀態以更新畫面
             checkUserStatus(user.id);
-          })
-          .on('postgres_changes', {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'reviews',
-            filter: `reviewee_id=eq.${user.id}`
-          }, (payload) => {
-            // 當有人給我評價時發送通知
-            try {
-              LocalNotifications.checkPermissions().then(perm => {
-                if (perm.display === 'granted') {
-                  LocalNotifications.schedule({
-                    notifications: [{
-                      title: "收到新評價！🀄",
-                      body: "有雀友剛剛為您留下了評價，快進來看看吧！",
-                      id: Math.floor(Date.now() / 1000),
-                      schedule: { at: new Date(Date.now() + 1000) }, // 1秒後觸發
-                    }]
-                  });
-                }
-              });
-            } catch(e) {
-              console.warn('Local notifications failed', e);
-            }
           })
           .subscribe();
       }

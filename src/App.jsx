@@ -7,6 +7,8 @@ import Login from './pages/Login'
 import Leaderboard from './pages/Leaderboard'
 import GameHistory from './pages/GameHistory'
 import { supabase } from './lib/supabase'
+import { Toaster, toast } from 'react-hot-toast'
+import { LocalNotifications } from '@capacitor/local-notifications'
 
 window.customAlert = (message, title = '系統提示', onClose = null) => {
   window.dispatchEvent(new CustomEvent('custom-alert', { detail: { message, title, onClose } }));
@@ -50,18 +52,76 @@ function App() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let reviewsSubscription = null;
+
+    const setupListeners = (userId) => {
+      if (reviewsSubscription) supabase.removeChannel(reviewsSubscription);
+
+      reviewsSubscription = supabase
+        .channel('global_reviews')
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'reviews',
+          filter: `reviewee_id=eq.${userId}`
+        }, (payload) => {
+          // 顯示 App 內的 Toast 通知
+          toast('收到新評價！有雀友剛剛為您留下了評價🀄', {
+            icon: '🀄',
+            style: {
+              border: '2px solid #000',
+              padding: '16px',
+              color: '#000',
+              fontWeight: '900',
+              boxShadow: '4px 4px 0px 0px rgba(0,0,0,1)',
+              borderRadius: '8px'
+            },
+          });
+          
+          // 觸發本地通知 (在背景時有用)
+          try {
+            LocalNotifications.checkPermissions().then(perm => {
+              if (perm.display === 'granted') {
+                LocalNotifications.schedule({
+                  notifications: [{
+                    title: "收到新評價！🀄",
+                    body: "有雀友剛剛為您留下了評價，快進來看看吧！",
+                    id: Math.floor(Date.now() / 1000),
+                    schedule: { at: new Date(Date.now() + 1000) },
+                  }]
+                });
+              }
+            });
+          } catch(e) {
+            console.warn('Local notifications failed', e);
+          }
+        })
+        .subscribe();
+    };
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setLoading(false)
+      if (session?.user) {
+        setupListeners(session.user.id);
+      }
     })
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
+      if (session?.user) {
+        setupListeners(session.user.id);
+      } else {
+        if (reviewsSubscription) supabase.removeChannel(reviewsSubscription);
+      }
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      subscription.unsubscribe();
+      if (reviewsSubscription) supabase.removeChannel(reviewsSubscription);
+    }
   }, [])
 
   if (loading) {
@@ -75,6 +135,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <Toaster position="top-center" reverseOrder={false} />
       <GlobalAlert />
       <Routes>
         <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
