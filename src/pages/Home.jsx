@@ -5,6 +5,7 @@ import QRCodeModal from '../components/QRCodeModal'
 import UserProfileModal from '../components/UserProfileModal'
 import { isAfter } from 'date-fns'
 import { Geolocation } from '@capacitor/geolocation'
+import { LocalNotifications } from '@capacitor/local-notifications'
 
 export default function Home() {
   const [isOnline, setIsOnline] = useState(false)
@@ -49,11 +50,11 @@ export default function Home() {
                 if (permission === 'granted') {
                   new Notification('牌局已結束', { body: '別忘了到「歷史牌局」為剛才的雀友留下評價喔！' });
                 } else {
-                  alert('牌局已結束！別忘了到「歷史牌局」為剛才的雀友留下評價喔！');
+                  window.customAlert('牌局已結束！別忘了到「歷史牌局」為剛才的雀友留下評價喔！');
                 }
               });
             } else {
-              alert('牌局已結束！別忘了到「歷史牌局」為剛才的雀友留下評價喔！');
+              window.customAlert('牌局已結束！別忘了到「歷史牌局」為剛才的雀友留下評價喔！');
             }
           } else {
             // 還在牌局中
@@ -113,9 +114,10 @@ export default function Home() {
       // 2. 抓取真實評價與聯絡方式取代 Placeholder
       if (topUsers.length > 0) {
         const userIds = topUsers.map(u => u.id);
-        const [ { data: reviewsData }, { data: contactsData } ] = await Promise.all([
+        const [ { data: reviewsData }, { data: contactsData }, { data: rankData } ] = await Promise.all([
           supabase.from('reviews').select('reviewee_id, speed_rating, skill_rating, manner_rating').in('reviewee_id', userIds),
-          supabase.from('profiles').select('id, contact_info').in('id', userIds)
+          supabase.from('profiles').select('id, contact_info').in('id', userIds),
+          supabase.from('leaderboard_stats').select('user_id, rank').in('user_id', userIds)
         ]);
 
         topUsers = topUsers.map(u => {
@@ -133,7 +135,12 @@ export default function Home() {
             const c = contactsData.find(c => c.id === u.id);
             if (c) contact = c.contact_info;
           }
-          return { ...u, speed_rating: speed, skill_rating: skill, manner_rating: manner, contact_info: contact };
+          let rank = null;
+          if (rankData) {
+            const r = rankData.find(r => r.user_id === u.id);
+            if (r) rank = r.rank;
+          }
+          return { ...u, speed_rating: speed, skill_rating: skill, manner_rating: manner, contact_info: contact, rank };
         });
       }
 
@@ -173,13 +180,58 @@ export default function Home() {
               setShowQRModal(prev => {
                 if (prev) {
                   // 如果被掃描方正開著 QR 視窗，顯示成功提示
-                  alert('對方已成功掃描您的 QR Code！雙方已同步進入牌局。');
+                  window.customAlert('對方已成功掃描您的 QR Code！雙方已同步進入牌局。');
                 }
                 return false; // 關閉 QR 視窗
               });
+
+              // 對方掃描了我，預約牌局結束的本地通知
+              if (payload.new.play_until) {
+                try {
+                  const untilDate = new Date(payload.new.play_until);
+                  LocalNotifications.checkPermissions().then(perm => {
+                    if (perm.display === 'granted') {
+                      LocalNotifications.schedule({
+                        notifications: [{
+                          title: "牌局已結束",
+                          body: "別忘了到「歷史牌局」為剛才的雀友留下評價喔！",
+                          id: Math.floor(Date.now() / 1000),
+                          schedule: { at: untilDate },
+                        }]
+                      });
+                    }
+                  });
+                } catch(e) {
+                  console.warn('Local notifications not supported or failed', e);
+                }
+              }
             }
             // 重新抓取最新狀態以更新畫面
             checkUserStatus(user.id);
+          })
+          .on('postgres_changes', {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'reviews',
+            filter: `reviewee_id=eq.${user.id}`
+          }, (payload) => {
+            // 當有人給我評價時發送通知
+            try {
+              LocalNotifications.checkPermissions().then(perm => {
+                if (perm.display === 'granted') {
+                  LocalNotifications.schedule({
+                    notifications: [{
+                      title: "收到新評價！🀄",
+                      body: "有雀友剛剛為您留下了評價，快進來看看吧！",
+                      id: Math.floor(Date.now() / 1000),
+                      schedule: { at: new Date(Date.now() + 1000) }, // 1秒後觸發
+                    }]
+                  });
+                }
+              });
+            } catch(e) {
+              console.warn('Local notifications failed', e);
+            }
           })
           .subscribe();
       }
@@ -276,7 +328,7 @@ export default function Home() {
           fetchNearbyUsers(latitude, longitude, user.id)
         } catch (error) {
           console.error('Error getting location:', error)
-          alert('無法獲取位置，請允許定位權限')
+          window.customAlert('無法獲取位置，請允許定位權限')
           setLoading(false)
         }
       } else {
@@ -298,7 +350,32 @@ export default function Home() {
 
 
 
-  const toggleOnline = () => {
+  const toggleOnline = async () => {
+    try {
+      // 要求通知權限
+      const permStatus = await LocalNotifications.checkPermissions();
+      if (permStatus.display !== 'granted') {
+        await LocalNotifications.requestPermissions();
+      }
+    } catch(e) {
+      console.warn('Notification permissions request failed', e);
+    }
+
+    if (!isOnline && user) {
+      setLoading(true);
+      try {
+        const { data } = await supabase.from('profiles').select('username, contact_info').eq('id', user.id).single();
+        if (!data?.username || !data?.contact_info) {
+          window.customAlert('上線前請先到「名片」設定您的專屬名稱與聯絡方式，這樣其他雀友才能找到您喔！', '系統提示', () => {
+             // 關閉提示後可以選擇手動導航，或讓用戶自己點擊底部導航欄
+          });
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
     updateLocation(!isOnline)
   }
 
@@ -309,7 +386,7 @@ export default function Home() {
       {isOnline && playStatus !== 'playing' && (
         <div className="-mx-4 w-[calc(100%+2rem)] bg-black text-white py-1.5 mb-6 border-y-2 border-black overflow-hidden whitespace-nowrap shadow-brutal-sm">
           <div className="inline-block animate-marquee font-bold tracking-widest text-sm">
-            溫馨提醒：打牌純屬娛樂，請提防網路騙局，切勿沉迷賭博，並謹慎處理金錢往來... 🀄 尋找最近的雀友...
+            溫馨提醒：打牌純屬娛樂，請提防網路騙局，切勿沉迷賭博，並謹慎處理金錢往來... 🀄
           </div>
         </div>
       )}
@@ -378,19 +455,39 @@ export default function Home() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {nearbyUsers.map((u) => (
+                  {nearbyUsers.map((u) => {
+                    const r = u.rank;
+                    const isExpert = r && r <= 100;
+                    const cardBg = !isExpert ? 'bg-white' :
+                      r <= 3 ? 'bg-gold-foil' :
+                      r <= 20 ? 'bg-red-foil text-white' :
+                      r <= 60 ? 'bg-blue-foil text-white' :
+                      'bg-gray-foil text-white';
+
+                    return (
                     <div
                       key={u.id}
-                      className="bg-white border-2 border-black rounded-md p-5 shadow-tile mb-4"
+                      className={`${cardBg} border-2 border-black rounded-md p-5 shadow-tile mb-4 ${isExpert ? 'shadow-brutal border-4' : ''}`}
                     >
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-4">
-                          <div className="w-14 h-14 border-2 border-black rounded-full flex items-center justify-center bg-[#F5F4EE] shadow-brutal-sm">
+                          <div className="w-14 h-14 border-2 border-black rounded-full flex items-center justify-center bg-[#F5F4EE] shadow-brutal-sm shrink-0 text-black">
                             <User size={28} />
                           </div>
                           <div>
-                            <div className="font-black text-xl leading-tight">{u.username || '神秘雀友'}</div>
-                            <div className="text-sm font-bold mt-1 text-blue-600 flex items-center gap-1">
+                            <div className="font-black text-xl leading-tight flex flex-wrap items-center gap-2">
+                              <span style={isExpert && r > 3 ? { filter: 'drop-shadow(1px 1px 0px #000)' } : {}}>
+                                {u.username || '神秘雀友'}
+                              </span>
+                              {isExpert && (
+                                <span className={`px-2 py-0.5 text-[10px] font-black border-2 border-black shadow-brutal-sm ${
+                                  r <= 3 ? 'bg-white text-black' : 'bg-black text-white'
+                                }`}>
+                                  {r === 1 ? '雀神' : r === 2 ? '雀聖' : r === 3 ? '雀王' : r <= 20 ? '雀將' : r <= 60 ? '雀豪' : '雀俠'}
+                                </span>
+                              )}
+                            </div>
+                            <div className={`text-sm font-bold mt-1 flex items-center gap-1 ${isExpert && r > 3 ? 'text-blue-200' : 'text-blue-600'}`}>
                               <Radio size={14} className="animate-pulse" />
                               {u.distance_meters === Infinity ? '距離未知' : `距離 ${u.distance_meters > 1000 ? (u.distance_meters/1000).toFixed(1) + 'km' : Math.round(u.distance_meters) + 'm'}`}
                             </div>
@@ -399,39 +496,39 @@ export default function Home() {
                       </div>
 
                       {/* 評價區塊 (真實數據) */}
-                      <div className="flex justify-between items-center my-4 py-3 border-y-2 border-black">
+                      <div className={`flex justify-between items-center my-4 py-3 border-y-2 border-black ${isExpert && r > 3 ? 'bg-black/20 rounded-md border-x-2 px-2' : ''}`}>
                         <div className="flex-1 text-center">
                           <div className="flex justify-center mb-1"><Zap size={20} /></div>
-                          <div className="text-[10px] font-bold tracking-wider">牌速: {u.speed_rating || '-'}</div>
+                          <div className="text-[10px] font-bold tracking-wider" style={isExpert && r > 3 ? { filter: 'drop-shadow(1px 1px 0px #000)' } : {}}>牌速: {u.speed_rating || '-'}</div>
                         </div>
-                        <div className="w-[2px] h-8 bg-black"></div>
+                        <div className={`w-[2px] h-8 ${isExpert && r > 3 ? 'bg-white/50' : 'bg-black'}`}></div>
                         <div className="flex-1 text-center">
                           <div className="flex justify-center mb-1">
-                            <span className="font-black text-lg leading-none text-red-600" style={{height: '20px'}}>中</span>
+                            <span className={`font-black text-lg leading-none ${isExpert && r > 3 ? 'text-red-400' : 'text-red-600'}`} style={{height: '20px', filter: isExpert && r > 3 ? 'drop-shadow(1px 1px 0px #000)' : ''}}>中</span>
                           </div>
-                          <div className="text-[10px] font-bold tracking-wider">牌技: {u.skill_rating || '-'}</div>
+                          <div className="text-[10px] font-bold tracking-wider" style={isExpert && r > 3 ? { filter: 'drop-shadow(1px 1px 0px #000)' } : {}}>牌技: {u.skill_rating || '-'}</div>
                         </div>
-                        <div className="w-[2px] h-8 bg-black"></div>
+                        <div className={`w-[2px] h-8 ${isExpert && r > 3 ? 'bg-white/50' : 'bg-black'}`}></div>
                         <div className="flex-1 text-center">
                           <div className="flex justify-center mb-1"><Handshake size={20} /></div>
-                          <div className="text-[10px] font-bold tracking-wider">牌品: {u.manner_rating || '-'}</div>
+                          <div className="text-[10px] font-bold tracking-wider" style={isExpert && r > 3 ? { filter: 'drop-shadow(1px 1px 0px #000)' } : {}}>牌品: {u.manner_rating || '-'}</div>
                         </div>
                       </div>
 
                       {/* 聯絡資訊直接顯示 */}
-                      <div className="bg-[#F5F4EE] border-2 border-black rounded-lg p-3 mb-4 text-sm font-bold">
+                      <div className="bg-[#F5F4EE] border-2 border-black rounded-lg p-3 mb-4 text-sm font-bold text-black">
                         <div className="text-gray-500 text-xs mb-1">聯絡方式</div>
-                        <div className="break-words">{u.contact_info || '尚未提供'}</div>
+                        <div className="break-all">{u.contact_info || '未提供'}</div>
                       </div>
 
                       <button 
                         onClick={() => setSelectedUser(u)}
-                        className="w-full border-2 border-black rounded-md py-3 font-black tracking-widest hover:bg-black hover:text-white transition-colors active:translate-y-[2px] bg-[#F5F4EE] shadow-brutal-sm"
+                        className="w-full bg-white text-black border-2 border-black rounded-md py-3 font-black tracking-widest shadow-brutal-sm active:shadow-none active:translate-y-1 transition-all"
                       >
-                        查看玩家評價
+                        查看名片
                       </button>
                     </div>
-                  ))}
+                  )})}
                 </div>
               )}
             </div>

@@ -11,6 +11,9 @@
   }
   
   body {
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
     background-color: #F5F4EE;
     background-image: 
       /* Base noise for paper grain */
@@ -24,6 +27,14 @@
 }
 
 @layer utilities {
+  .min-h-screen {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  .h-screen {
+    height: 100vh;
+    height: 100dvh;
+  }
   .shadow-tile {
     box-shadow: 0px 4px 0px 0px #E5E4DE, 0px 6px 0px 0px #000000;
   }
@@ -70,7 +81,7 @@
   100% { transform: translateX(-100%); }
 }
 .animate-marquee {
-  animation: marquee 15s linear infinite;
+  animation: marquee 20s linear infinite;
   display: inline-block;
   padding-left: 100%;
 }

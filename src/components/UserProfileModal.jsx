@@ -69,10 +69,10 @@ export default function UserProfileModal({ user, onClose }) {
             {userRank && userRank <= 100 && (
               <span className={`px-2 py-0.5 text-xs font-black border-2 border-black shadow-brutal-sm ${
                 userRank <= 3 ? 'bg-gold-foil text-black' :
-                userRank <= 20 ? 'bg-red-500 text-white' :
-                userRank <= 60 ? 'bg-indigo-900 text-white' :
-                'bg-gray-700 text-white'
-              }`}>
+                userRank <= 20 ? 'bg-red-foil text-white' :
+                userRank <= 60 ? 'bg-blue-foil text-white' :
+                'bg-gray-foil text-white'
+              }`} style={userRank > 3 ? { filter: 'drop-shadow(1px 1px 0px #000)' } : {}}>
                 {userRank === 1 ? '雀神' : 
                  userRank === 2 ? '雀聖' : 
                  userRank === 3 ? '雀王' : 

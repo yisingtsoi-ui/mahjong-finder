@@ -8,7 +8,10 @@ export default function Navbar() {
     } hover:text-black transition-colors`
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t-4 border-black py-3 px-6 flex justify-around items-center z-50">
+    <nav 
+      className="fixed bottom-0 left-0 right-0 bg-white border-t-4 border-black px-6 flex justify-around items-center z-50"
+      style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))', paddingTop: '0.75rem' }}
+    >
       <NavLink to="/" className={linkClass}>
         <Home size={24} strokeWidth={2.5} />
         <span className="text-[10px] mt-1 tracking-widest">首頁</span>

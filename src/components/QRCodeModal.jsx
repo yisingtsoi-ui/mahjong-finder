@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Scanner } from '@yudiel/react-qr-scanner';
-import { X, QrCode, ScanLine } from 'lucide-react';
+import { X, QrCode as QrIcon, ScanLine } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 export default function QRCodeModal({ user, onClose, onMatchStarted }) {
   const [tab, setTab] = useState('show'); // 'show' 或 'scan'
@@ -36,7 +37,7 @@ export default function QRCodeModal({ user, onClose, onMatchStarted }) {
       }
 
       if (scannedUserId === user.id) {
-        alert("不能掃描自己的 QR Code！");
+        window.customAlert("不能掃描自己的 QR Code！");
         setLoading(false);
         return;
       }
@@ -69,6 +70,25 @@ export default function QRCodeModal({ user, onClose, onMatchStarted }) {
         play_until: playUntil.toISOString(),
       }).in('id', [user.id, scannedUserId]);
 
+      // 預約 2 分鐘後的本地通知
+      try {
+        const permStatus = await LocalNotifications.checkPermissions();
+        if (permStatus.display === 'granted') {
+          await LocalNotifications.schedule({
+            notifications: [
+              {
+                title: "牌局已結束",
+                body: "別忘了到「歷史牌局」為剛才的雀友留下評價喔！",
+                id: Math.floor(Date.now() / 1000), // id must be integer
+                schedule: { at: playUntil },
+              }
+            ]
+          });
+        }
+      } catch(e) {
+        console.warn('Local notifications not supported or failed', e);
+      }
+
       // 觸發碰撞動畫
       setIsClashing(true);
       if (window.navigator && window.navigator.vibrate) {
@@ -76,14 +96,15 @@ export default function QRCodeModal({ user, onClose, onMatchStarted }) {
       }
       
       setTimeout(() => {
-        alert("成功確認到達！已進入牌局狀態，兩分鐘後將自動結束。");
-        onMatchStarted();
+        window.customAlert("成功確認到達！已進入牌局狀態，兩分鐘後將自動結束。", '系統提示', () => {
+          onMatchStarted();
+        });
       }, 800);
       
     } catch (error) {
       console.error('Error starting match:', error);
       const rawText = scannedData && scannedData[0] ? scannedData[0].rawValue : JSON.stringify(scannedData);
-      alert(`掃描失敗，請確定這是一個有效的雀友 QR Code。\n錯誤內容: ${error.message}\n掃描資料: ${rawText}`);
+      window.customAlert(`掃描失敗，請確定這是一個有效的雀友 QR Code。\n錯誤內容: ${error.message}\n掃描資料: ${rawText}`);
       setLoading(false);
     }
   };
@@ -139,7 +160,7 @@ export default function QRCodeModal({ user, onClose, onMatchStarted }) {
                   onError={(error) => {
                     console.error('Scanner error:', error);
                     if (error?.message?.includes('Permission') || error?.name === 'NotAllowedError') {
-                      alert('無法開啟相機，請確保您已允許瀏覽器或應用程式使用相機權限！');
+                      window.customAlert('無法開啟相機，請確保您已允許瀏覽器或應用程式使用相機權限！');
                     }
                   }}
                   components={{ audio: false, finder: false }}

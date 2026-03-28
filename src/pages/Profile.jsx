@@ -101,7 +101,7 @@ export default function Profile() {
 
   const updateProfile = async () => {
     if (!profile.username.trim()) {
-      alert('名稱不能為空！')
+      window.customAlert('名稱不能為空！')
       return
     }
 
@@ -116,8 +116,10 @@ export default function Profile() {
         .neq('id', userId)
         .single()
 
+      if (checkError && checkError.code !== 'PGRST116') throw checkError
+      
       if (existingUser) {
-        alert('這個名稱已經有人使用了，請換一個專屬名稱！')
+        window.customAlert('這個名稱已經有人使用了，請換一個專屬名稱！')
         setLoading(false)
         return
       }
@@ -138,7 +140,7 @@ export default function Profile() {
       setEditing(false)
     } catch (error) {
       console.error('Error updating profile:', error)
-      alert('更新失敗')
+      window.customAlert('更新失敗')
     } finally {
       setLoading(false)
     }

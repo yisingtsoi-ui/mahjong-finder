@@ -40,11 +40,12 @@ export default function ReviewModal({ match, currentUser, targetUser, existingRe
         if (error) throw error;
       }
       
-      alert('感謝您的評分！');
-      onSubmit();
+      window.customAlert('感謝您的評分！', '系統提示', () => {
+        onSubmit();
+      });
     } catch (error) {
       console.error('Submit review error:', error);
-      alert('提交失敗，請稍後再試');
+      window.customAlert('提交失敗，請稍後再試');
     } finally {
       setSubmitting(false);
     }
