@@ -6,6 +6,7 @@ import Profile from './pages/Profile'
 import Login from './pages/Login'
 import Leaderboard from './pages/Leaderboard'
 import PrivacyPolicy from './pages/PrivacyPolicy'
+import SafetyPolicy from './pages/SafetyPolicy'
 import GameHistory from './pages/GameHistory'
 import { supabase } from './lib/supabase'
 import { Toaster, toast } from 'react-hot-toast'
@@ -51,7 +52,7 @@ const GlobalAlert = () => {
 const NavigationBar = ({ session }) => {
   const location = useLocation();
   if (!session) return null;
-  if (location.pathname === '/privacy') return null;
+  if (location.pathname === '/privacy' || location.pathname === '/safety') return null;
   return <Navbar />;
 };
 
@@ -150,11 +151,9 @@ function App() {
         <Route path="/" element={session ? <Home /> : <Navigate to="/login" />} />
         <Route path="/profile" element={session ? <Profile /> : <Navigate to="/login" />} />
         <Route path="/history" element={session ? <GameHistory /> : <Navigate to="/login" />} />
-        <Route
-          path="/leaderboard"
-          element={session ? <Leaderboard /> : <Navigate to="/login" />}
-        />
+        <Route path="/leaderboard" element={session ? <Leaderboard /> : <Navigate to="/login" />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/safety" element={<SafetyPolicy />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
       <NavigationBar session={session} />
