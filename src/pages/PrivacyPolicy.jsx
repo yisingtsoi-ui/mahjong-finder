@@ -75,8 +75,7 @@ export default function PrivacyPolicy() {
           <h2 className="text-xl font-black mb-3 bg-black text-white inline-block px-3 py-1">8. 聯絡我們</h2>
           <p className="font-bold leading-relaxed">
             如果您對本隱私權政策或資料處理方式有任何疑問，請透過以下方式與我們聯繫：<br />
-            <span className="text-blue-600 mt-2 inline-block">電子郵件：support@mahjongfinder.com</span><br />
-            <span className="text-sm text-gray-500">（上架前請記得將上述信箱替換為您的真實聯絡信箱）</span>
+            <span className="text-blue-600 mt-2 inline-block">電子郵件：mahjongfinder@gmail.com</span><br />
           </p>
         </section>
         

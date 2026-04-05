@@ -48,7 +48,7 @@ export default function SafetyPolicy() {
           <h2 className="text-xl font-black mb-3 bg-black text-white inline-block px-3 py-1">4. 聯絡與舉報管道</h2>
           <p className="font-bold leading-relaxed">
             負責團隊：Mahjong Finder 信任與安全團隊<br />
-            <span className="text-blue-600 mt-2 inline-block">檢舉與聯絡信箱：support@mahjongfinder.com</span><br />
+            <span className="text-blue-600 mt-2 inline-block">檢舉與聯絡信箱：mahjongfinder@gmail.com</span><br />
           </p>
         </section>
       </div>
