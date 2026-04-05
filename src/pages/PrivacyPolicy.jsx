@@ -65,7 +65,14 @@ export default function PrivacyPolicy() {
         </section>
 
         <section>
-          <h2 className="text-xl font-black mb-3 bg-black text-white inline-block px-3 py-1">7. 聯絡我們</h2>
+          <h2 className="text-xl font-black mb-3 bg-black text-white inline-block px-3 py-1">7. 兒童安全與 CSAE 防範標準</h2>
+          <p className="font-bold leading-relaxed">
+            我們對任何形式的兒童性虐待與剝削 (CSAE) 採取零容忍政策。我們強烈禁止發布或分享任何相關內容。若發現違規，我們將立即封鎖帳號並通報相關執法單位。詳細政策請參閱我們的<a href="/safety" className="text-blue-600 underline">安全標準與防範政策</a>。
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-xl font-black mb-3 bg-black text-white inline-block px-3 py-1">8. 聯絡我們</h2>
           <p className="font-bold leading-relaxed">
             如果您對本隱私權政策或資料處理方式有任何疑問，請透過以下方式與我們聯繫：<br />
             <span className="text-blue-600 mt-2 inline-block">電子郵件：support@mahjongfinder.com</span><br />
