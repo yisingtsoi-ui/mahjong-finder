@@ -5,6 +5,7 @@ import Home from './pages/Home'
 import Profile from './pages/Profile'
 import Login from './pages/Login'
 import Leaderboard from './pages/Leaderboard'
+import Ledger from './pages/Ledger'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import SafetyPolicy from './pages/SafetyPolicy'
 import GameHistory from './pages/GameHistory'
@@ -152,6 +153,7 @@ function App() {
         <Route path="/profile" element={session ? <Profile /> : <Navigate to="/login" />} />
         <Route path="/history" element={session ? <GameHistory /> : <Navigate to="/login" />} />
         <Route path="/leaderboard" element={session ? <Leaderboard /> : <Navigate to="/login" />} />
+        <Route path="/ledger" element={session ? <Ledger /> : <Navigate to="/login" />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/safety" element={<SafetyPolicy />} />
         <Route path="*" element={<Navigate to="/" />} />

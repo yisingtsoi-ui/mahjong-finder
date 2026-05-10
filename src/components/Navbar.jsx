@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Trophy, User, Home, History } from 'lucide-react'
+import { Calculator, Trophy, User, Home, History } from 'lucide-react'
 
 export default function Navbar() {
   const linkClass = ({ isActive }) =>
@@ -19,6 +19,10 @@ export default function Navbar() {
       <NavLink to="/leaderboard" className={linkClass}>
         <Trophy size={24} strokeWidth={2.5} />
         <span className="text-[10px] mt-1 tracking-widest">高手榜</span>
+      </NavLink>
+      <NavLink to="/ledger" className={linkClass}>
+        <Calculator size={24} strokeWidth={2.5} />
+        <span className="text-[10px] mt-1 tracking-widest">記帳本</span>
       </NavLink>
       <NavLink to="/history" className={linkClass}>
         <History size={24} strokeWidth={2.5} />
