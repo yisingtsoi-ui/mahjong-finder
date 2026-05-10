@@ -79,7 +79,7 @@ export default function QRCodeModal({ user, onClose, onMatchStarted }) {
             }
             
             setTimeout(() => {
-              window.customAlert("成功確認到達！已進入牌局狀態，兩分鐘後將自動結束。", '系統提示', () => {
+              window.customAlert("成功確認到達！已進入牌局狀態，3 小時後將自動結束。", '系統提示', () => {
                 onMatchStarted();
               });
             }, 800);
@@ -144,16 +144,16 @@ export default function QRCodeModal({ user, onClose, onMatchStarted }) {
 
       if (playersError) throw playersError;
 
-      // 3. 更新雙方狀態為「牌局中」，時間設為 2 分鐘後
+      // 3. 更新雙方狀態為「牌局中」，時間設為 3 小時後
       const playUntil = new Date();
-      playUntil.setMinutes(playUntil.getMinutes() + 2);
+      playUntil.setHours(playUntil.getHours() + 3);
 
       await supabase.from('profiles').update({
         play_status: 'playing',
         play_until: playUntil.toISOString(),
       }).in('id', [user.id, scannedUserId]);
 
-      // 預約 2 分鐘後的本地通知
+      // 預約 3 小時後的本地通知
       try {
         const permStatus = await LocalNotifications.checkPermissions();
         if (permStatus.display === 'granted') {
@@ -179,7 +179,7 @@ export default function QRCodeModal({ user, onClose, onMatchStarted }) {
       }
       
       setTimeout(() => {
-        window.customAlert("成功確認到達！已進入牌局狀態，兩分鐘後將自動結束。", '系統提示', () => {
+        window.customAlert("成功確認到達！已進入牌局狀態，3 小時後將自動結束。", '系統提示', () => {
           onMatchStarted();
         });
       }, 800);
